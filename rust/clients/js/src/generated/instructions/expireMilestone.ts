@@ -26,6 +26,7 @@ import {
   type Instruction,
   type InstructionWithAccounts,
   type InstructionWithData,
+  type ReadonlyAccount,
   type ReadonlySignerAccount,
   type ReadonlyUint8Array,
   type WritableAccount,
@@ -53,6 +54,7 @@ export type ExpireMilestoneInstruction<
   TProgram extends string = typeof BESTCROW_PROGRAM_ADDRESS,
   TAccountCaller extends string | AccountMeta<string> = string,
   TAccountCampaign extends string | AccountMeta<string> = string,
+  TAccountProposal extends string | AccountMeta<string> = string,
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
@@ -65,6 +67,9 @@ export type ExpireMilestoneInstruction<
       TAccountCampaign extends string
         ? WritableAccount<TAccountCampaign>
         : TAccountCampaign,
+      TAccountProposal extends string
+        ? ReadonlyAccount<TAccountProposal>
+        : TAccountProposal,
       ...TRemainingAccounts,
     ]
   >;
@@ -101,17 +106,24 @@ export function getExpireMilestoneInstructionDataCodec(): FixedSizeCodec<
 export type ExpireMilestoneInput<
   TAccountCaller extends InstructionSignerInput = InstructionSignerInput,
   TAccountCampaign extends InstructionAccountInput = InstructionAccountInput,
+  TAccountProposal extends InstructionAccountInput = InstructionAccountInput,
 > = {
   caller: TAccountCaller;
   campaign: TAccountCampaign;
+  proposal: TAccountProposal;
 };
 
 export function getExpireMilestoneInstruction<
   TAccountCaller extends InstructionSignerInput,
   TAccountCampaign extends InstructionAccountInput,
+  TAccountProposal extends InstructionAccountInput,
   TProgramAddress extends Address = typeof BESTCROW_PROGRAM_ADDRESS,
 >(
-  input: ExpireMilestoneInput<TAccountCaller, TAccountCampaign>,
+  input: ExpireMilestoneInput<
+    TAccountCaller,
+    TAccountCampaign,
+    TAccountProposal
+  >,
   config?: { programAddress?: TProgramAddress },
 ): ExpireMilestoneInstruction<
   TProgramAddress,
@@ -122,6 +134,10 @@ export function getExpireMilestoneInstruction<
   ResolvedInstructionAccountMeta<
     TAccountCampaign,
     InstructionAccountInputAddress<TAccountCampaign>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountProposal,
+    InstructionAccountInputAddress<TAccountProposal>
   >
 > {
   // Program address.
@@ -138,6 +154,11 @@ export function getExpireMilestoneInstruction<
       isSigner: false,
       isWritable: true,
     },
+    proposal: {
+      value: input.proposal ?? null,
+      isSigner: false,
+      isWritable: false,
+    },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -148,6 +169,7 @@ export function getExpireMilestoneInstruction<
     accounts: [
       getAccountMeta("caller", accounts.caller),
       getAccountMeta("campaign", accounts.campaign),
+      getAccountMeta("proposal", accounts.proposal),
     ],
     data: getExpireMilestoneInstructionDataEncoder().encode({}),
     programAddress,
@@ -160,6 +182,10 @@ export function getExpireMilestoneInstruction<
     ResolvedInstructionAccountMeta<
       TAccountCampaign,
       InstructionAccountInputAddress<TAccountCampaign>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountProposal,
+      InstructionAccountInputAddress<TAccountProposal>
     >
   >);
 }
@@ -172,6 +198,7 @@ export type ParsedExpireMilestoneInstruction<
   accounts: {
     caller: TAccountMetas[0];
     campaign: TAccountMetas[1];
+    proposal: TAccountMetas[2];
   };
   data: ExpireMilestoneInstructionData;
 };
@@ -184,12 +211,12 @@ export function parseExpireMilestoneInstruction<
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>,
 ): ParsedExpireMilestoneInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 2) {
+  if (instruction.accounts.length < 3) {
     throw new SolanaError(
       SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
       {
         actualAccountMetas: instruction.accounts.length,
-        expectedAccountMetas: 2,
+        expectedAccountMetas: 3,
       },
     );
   }
@@ -201,7 +228,11 @@ export function parseExpireMilestoneInstruction<
   };
   return {
     programAddress: instruction.programAddress,
-    accounts: { caller: getNextAccount(), campaign: getNextAccount() },
+    accounts: {
+      caller: getNextAccount(),
+      campaign: getNextAccount(),
+      proposal: getNextAccount(),
+    },
     data: getExpireMilestoneInstructionDataDecoder().decode(instruction.data),
   };
 }

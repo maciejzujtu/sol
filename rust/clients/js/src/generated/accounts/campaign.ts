@@ -67,6 +67,10 @@ export type Campaign = {
   discriminator: ReadonlyUint8Array;
   creator: Address;
   campaignId: bigint;
+  quoteMint: Address;
+  baseMint: Address;
+  vault: Address;
+  metaDao: Address;
   goal: bigint;
   totalRaised: bigint;
   escrowBalance: bigint;
@@ -76,19 +80,24 @@ export type Campaign = {
   refundDenominator: bigint;
   refundedAmount: bigint;
   fundingDeadline: bigint;
-  votePeriodSecs: bigint;
+  marketTimeoutSecs: bigint;
   metadataHash: Array<number>;
   currentMilestone: number;
   status: CampaignStatus;
   backerCount: number;
   refundClaimCount: number;
   bump: number;
+  vaultBump: number;
   milestones: Array<Milestone>;
 };
 
 export type CampaignArgs = {
   creator: Address;
   campaignId: number | bigint;
+  quoteMint: Address;
+  baseMint: Address;
+  vault: Address;
+  metaDao: Address;
   goal: number | bigint;
   totalRaised: number | bigint;
   escrowBalance: number | bigint;
@@ -98,13 +107,14 @@ export type CampaignArgs = {
   refundDenominator: number | bigint;
   refundedAmount: number | bigint;
   fundingDeadline: number | bigint;
-  votePeriodSecs: number | bigint;
+  marketTimeoutSecs: number | bigint;
   metadataHash: Array<number>;
   currentMilestone: number;
   status: CampaignStatusArgs;
   backerCount: number;
   refundClaimCount: number;
   bump: number;
+  vaultBump: number;
   milestones: Array<MilestoneArgs>;
 };
 
@@ -115,6 +125,10 @@ export function getCampaignEncoder(): Encoder<CampaignArgs> {
       ["discriminator", fixEncoderSize(getBytesEncoder(), 8)],
       ["creator", getAddressEncoder()],
       ["campaignId", getU64Encoder()],
+      ["quoteMint", getAddressEncoder()],
+      ["baseMint", getAddressEncoder()],
+      ["vault", getAddressEncoder()],
+      ["metaDao", getAddressEncoder()],
       ["goal", getU64Encoder()],
       ["totalRaised", getU64Encoder()],
       ["escrowBalance", getU64Encoder()],
@@ -124,13 +138,14 @@ export function getCampaignEncoder(): Encoder<CampaignArgs> {
       ["refundDenominator", getU64Encoder()],
       ["refundedAmount", getU64Encoder()],
       ["fundingDeadline", getI64Encoder()],
-      ["votePeriodSecs", getI64Encoder()],
+      ["marketTimeoutSecs", getI64Encoder()],
       ["metadataHash", getArrayEncoder(getU8Encoder(), { size: 32 })],
       ["currentMilestone", getU8Encoder()],
       ["status", getCampaignStatusEncoder()],
       ["backerCount", getU32Encoder()],
       ["refundClaimCount", getU32Encoder()],
       ["bump", getU8Encoder()],
+      ["vaultBump", getU8Encoder()],
       ["milestones", getArrayEncoder(getMilestoneEncoder())],
     ]),
     (value) => ({ ...value, discriminator: CAMPAIGN_DISCRIMINATOR }),
@@ -143,6 +158,10 @@ export function getCampaignDecoder(): Decoder<Campaign> {
     ["discriminator", fixDecoderSize(getBytesDecoder(), 8)],
     ["creator", getAddressDecoder()],
     ["campaignId", getU64Decoder()],
+    ["quoteMint", getAddressDecoder()],
+    ["baseMint", getAddressDecoder()],
+    ["vault", getAddressDecoder()],
+    ["metaDao", getAddressDecoder()],
     ["goal", getU64Decoder()],
     ["totalRaised", getU64Decoder()],
     ["escrowBalance", getU64Decoder()],
@@ -152,13 +171,14 @@ export function getCampaignDecoder(): Decoder<Campaign> {
     ["refundDenominator", getU64Decoder()],
     ["refundedAmount", getU64Decoder()],
     ["fundingDeadline", getI64Decoder()],
-    ["votePeriodSecs", getI64Decoder()],
+    ["marketTimeoutSecs", getI64Decoder()],
     ["metadataHash", getArrayDecoder(getU8Decoder(), { size: 32 })],
     ["currentMilestone", getU8Decoder()],
     ["status", getCampaignStatusDecoder()],
     ["backerCount", getU32Decoder()],
     ["refundClaimCount", getU32Decoder()],
     ["bump", getU8Decoder()],
+    ["vaultBump", getU8Decoder()],
     ["milestones", getArrayDecoder(getMilestoneDecoder())],
   ]);
 }

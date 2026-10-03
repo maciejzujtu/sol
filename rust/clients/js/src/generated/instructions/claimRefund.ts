@@ -28,9 +28,10 @@ import {
   type Instruction,
   type InstructionWithAccounts,
   type InstructionWithData,
-  type ReadonlySignerAccount,
+  type ReadonlyAccount,
   type ReadonlyUint8Array,
   type WritableAccount,
+  type WritableSignerAccount,
 } from "@solana/kit";
 import {
   getAccountMetaFactory,
@@ -59,13 +60,22 @@ export type ClaimRefundInstruction<
   TAccountCampaign extends string | AccountMeta<string> = string,
   TAccountWallet extends string | AccountMeta<string> = string,
   TAccountBacker extends string | AccountMeta<string> = string,
+  TAccountQuoteMint extends string | AccountMeta<string> = string,
+  TAccountVault extends string | AccountMeta<string> = string,
+  TAccountWalletToken extends string | AccountMeta<string> = string,
+  TAccountTokenProgram extends string | AccountMeta<string> =
+    "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+  TAccountAssociatedTokenProgram extends string | AccountMeta<string> =
+    "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
+  TAccountSystemProgram extends string | AccountMeta<string> =
+    "11111111111111111111111111111111",
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
   InstructionWithAccounts<
     [
       TAccountCaller extends string
-        ? ReadonlySignerAccount<TAccountCaller> &
+        ? WritableSignerAccount<TAccountCaller> &
             AccountSignerMeta<TAccountCaller>
         : TAccountCaller,
       TAccountCampaign extends string
@@ -77,6 +87,24 @@ export type ClaimRefundInstruction<
       TAccountBacker extends string
         ? WritableAccount<TAccountBacker>
         : TAccountBacker,
+      TAccountQuoteMint extends string
+        ? ReadonlyAccount<TAccountQuoteMint>
+        : TAccountQuoteMint,
+      TAccountVault extends string
+        ? WritableAccount<TAccountVault>
+        : TAccountVault,
+      TAccountWalletToken extends string
+        ? WritableAccount<TAccountWalletToken>
+        : TAccountWalletToken,
+      TAccountTokenProgram extends string
+        ? ReadonlyAccount<TAccountTokenProgram>
+        : TAccountTokenProgram,
+      TAccountAssociatedTokenProgram extends string
+        ? ReadonlyAccount<TAccountAssociatedTokenProgram>
+        : TAccountAssociatedTokenProgram,
+      TAccountSystemProgram extends string
+        ? ReadonlyAccount<TAccountSystemProgram>
+        : TAccountSystemProgram,
       ...TRemainingAccounts,
     ]
   >;
@@ -113,11 +141,26 @@ export type ClaimRefundAsyncInput<
   TAccountCampaign extends InstructionAccountInput = InstructionAccountInput,
   TAccountWallet extends InstructionAccountInput = InstructionAccountInput,
   TAccountBacker extends InstructionAccountInput = InstructionAccountInput,
+  TAccountQuoteMint extends InstructionAccountInput = InstructionAccountInput,
+  TAccountVault extends InstructionAccountInput = InstructionAccountInput,
+  TAccountWalletToken extends InstructionAccountInput = InstructionAccountInput,
+  TAccountTokenProgram extends InstructionAccountInput =
+    InstructionAccountInput,
+  TAccountAssociatedTokenProgram extends InstructionAccountInput =
+    InstructionAccountInput,
+  TAccountSystemProgram extends InstructionAccountInput =
+    InstructionAccountInput,
 > = {
   caller: TAccountCaller;
   campaign: TAccountCampaign;
   wallet: TAccountWallet;
   backer?: TAccountBacker;
+  quoteMint: TAccountQuoteMint;
+  vault?: TAccountVault;
+  walletToken?: TAccountWalletToken;
+  tokenProgram?: TAccountTokenProgram;
+  associatedTokenProgram?: TAccountAssociatedTokenProgram;
+  systemProgram?: TAccountSystemProgram;
 };
 
 export async function getClaimRefundInstructionAsync<
@@ -125,13 +168,25 @@ export async function getClaimRefundInstructionAsync<
   TAccountCampaign extends InstructionAccountInput,
   TAccountWallet extends InstructionAccountInput,
   TAccountBacker extends InstructionAccountInput,
+  TAccountQuoteMint extends InstructionAccountInput,
+  TAccountVault extends InstructionAccountInput,
+  TAccountWalletToken extends InstructionAccountInput,
+  TAccountTokenProgram extends InstructionAccountInput,
+  TAccountAssociatedTokenProgram extends InstructionAccountInput,
+  TAccountSystemProgram extends InstructionAccountInput,
   TProgramAddress extends Address = typeof BESTCROW_PROGRAM_ADDRESS,
 >(
   input: ClaimRefundAsyncInput<
     TAccountCaller,
     TAccountCampaign,
     TAccountWallet,
-    TAccountBacker
+    TAccountBacker,
+    TAccountQuoteMint,
+    TAccountVault,
+    TAccountWalletToken,
+    TAccountTokenProgram,
+    TAccountAssociatedTokenProgram,
+    TAccountSystemProgram
   >,
   config?: { programAddress?: TProgramAddress },
 ): Promise<
@@ -152,6 +207,30 @@ export async function getClaimRefundInstructionAsync<
     ResolvedInstructionAccountMeta<
       TAccountBacker,
       InstructionAccountInputAddress<TAccountBacker>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountQuoteMint,
+      InstructionAccountInputAddress<TAccountQuoteMint>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountVault,
+      InstructionAccountInputAddress<TAccountVault>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountWalletToken,
+      InstructionAccountInputAddress<TAccountWalletToken>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountTokenProgram,
+      InstructionAccountInputAddress<TAccountTokenProgram>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountAssociatedTokenProgram,
+      InstructionAccountInputAddress<TAccountAssociatedTokenProgram>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountSystemProgram,
+      InstructionAccountInputAddress<TAccountSystemProgram>
     >
   >
 > {
@@ -163,7 +242,7 @@ export async function getClaimRefundInstructionAsync<
 
   // Original accounts.
   const originalAccounts = {
-    caller: { value: input.caller ?? null, isSigner: true, isWritable: false },
+    caller: { value: input.caller ?? null, isSigner: true, isWritable: true },
     campaign: {
       value: input.campaign ?? null,
       isSigner: false,
@@ -171,6 +250,32 @@ export async function getClaimRefundInstructionAsync<
     },
     wallet: { value: input.wallet ?? null, isSigner: false, isWritable: true },
     backer: { value: input.backer ?? null, isSigner: false, isWritable: true },
+    quoteMint: {
+      value: input.quoteMint ?? null,
+      isSigner: false,
+      isWritable: false,
+    },
+    vault: { value: input.vault ?? null, isSigner: false, isWritable: true },
+    walletToken: {
+      value: input.walletToken ?? null,
+      isSigner: false,
+      isWritable: true,
+    },
+    tokenProgram: {
+      value: input.tokenProgram ?? null,
+      isSigner: false,
+      isWritable: false,
+    },
+    associatedTokenProgram: {
+      value: input.associatedTokenProgram ?? null,
+      isSigner: false,
+      isWritable: false,
+    },
+    systemProgram: {
+      value: input.systemProgram ?? null,
+      isSigner: false,
+      isWritable: false,
+    },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -198,6 +303,59 @@ export async function getClaimRefundInstructionAsync<
       ],
     });
   }
+  if (!accounts.vault.value) {
+    accounts.vault.value = await getProgramDerivedAddress({
+      programAddress,
+      seeds: [
+        getBytesEncoder().encode(new Uint8Array([118, 97, 117, 108, 116])),
+        getAddressEncoder().encode(
+          getAddressFromResolvedInstructionAccount(
+            "campaign",
+            accounts.campaign.value,
+          ),
+        ),
+      ],
+    });
+  }
+  if (!accounts.walletToken.value) {
+    accounts.walletToken.value = await getProgramDerivedAddress({
+      programAddress:
+        "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL" as Address<"ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL">,
+      seeds: [
+        getAddressEncoder().encode(
+          getAddressFromResolvedInstructionAccount(
+            "wallet",
+            accounts.wallet.value,
+          ),
+        ),
+        getBytesEncoder().encode(
+          new Uint8Array([
+            6, 221, 246, 225, 215, 101, 161, 147, 217, 203, 225, 70, 206, 235,
+            121, 172, 28, 180, 133, 237, 95, 91, 55, 145, 58, 140, 245, 133,
+            126, 255, 0, 169,
+          ]),
+        ),
+        getAddressEncoder().encode(
+          getAddressFromResolvedInstructionAccount(
+            "quoteMint",
+            accounts.quoteMint.value,
+          ),
+        ),
+      ],
+    });
+  }
+  if (!accounts.tokenProgram.value) {
+    accounts.tokenProgram.value =
+      "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" as Address<"TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA">;
+  }
+  if (!accounts.associatedTokenProgram.value) {
+    accounts.associatedTokenProgram.value =
+      "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL" as Address<"ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL">;
+  }
+  if (!accounts.systemProgram.value) {
+    accounts.systemProgram.value =
+      "11111111111111111111111111111111" as Address<"11111111111111111111111111111111">;
+  }
 
   return Object.freeze({
     accounts: [
@@ -205,6 +363,12 @@ export async function getClaimRefundInstructionAsync<
       getAccountMeta("campaign", accounts.campaign),
       getAccountMeta("wallet", accounts.wallet),
       getAccountMeta("backer", accounts.backer),
+      getAccountMeta("quoteMint", accounts.quoteMint),
+      getAccountMeta("vault", accounts.vault),
+      getAccountMeta("walletToken", accounts.walletToken),
+      getAccountMeta("tokenProgram", accounts.tokenProgram),
+      getAccountMeta("associatedTokenProgram", accounts.associatedTokenProgram),
+      getAccountMeta("systemProgram", accounts.systemProgram),
     ],
     data: getClaimRefundInstructionDataEncoder().encode({}),
     programAddress,
@@ -225,6 +389,30 @@ export async function getClaimRefundInstructionAsync<
     ResolvedInstructionAccountMeta<
       TAccountBacker,
       InstructionAccountInputAddress<TAccountBacker>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountQuoteMint,
+      InstructionAccountInputAddress<TAccountQuoteMint>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountVault,
+      InstructionAccountInputAddress<TAccountVault>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountWalletToken,
+      InstructionAccountInputAddress<TAccountWalletToken>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountTokenProgram,
+      InstructionAccountInputAddress<TAccountTokenProgram>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountAssociatedTokenProgram,
+      InstructionAccountInputAddress<TAccountAssociatedTokenProgram>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountSystemProgram,
+      InstructionAccountInputAddress<TAccountSystemProgram>
     >
   >);
 }
@@ -234,11 +422,26 @@ export type ClaimRefundInput<
   TAccountCampaign extends InstructionAccountInput = InstructionAccountInput,
   TAccountWallet extends InstructionAccountInput = InstructionAccountInput,
   TAccountBacker extends InstructionAccountInput = InstructionAccountInput,
+  TAccountQuoteMint extends InstructionAccountInput = InstructionAccountInput,
+  TAccountVault extends InstructionAccountInput = InstructionAccountInput,
+  TAccountWalletToken extends InstructionAccountInput = InstructionAccountInput,
+  TAccountTokenProgram extends InstructionAccountInput =
+    InstructionAccountInput,
+  TAccountAssociatedTokenProgram extends InstructionAccountInput =
+    InstructionAccountInput,
+  TAccountSystemProgram extends InstructionAccountInput =
+    InstructionAccountInput,
 > = {
   caller: TAccountCaller;
   campaign: TAccountCampaign;
   wallet: TAccountWallet;
   backer: TAccountBacker;
+  quoteMint: TAccountQuoteMint;
+  vault: TAccountVault;
+  walletToken: TAccountWalletToken;
+  tokenProgram?: TAccountTokenProgram;
+  associatedTokenProgram?: TAccountAssociatedTokenProgram;
+  systemProgram?: TAccountSystemProgram;
 };
 
 export function getClaimRefundInstruction<
@@ -246,13 +449,25 @@ export function getClaimRefundInstruction<
   TAccountCampaign extends InstructionAccountInput,
   TAccountWallet extends InstructionAccountInput,
   TAccountBacker extends InstructionAccountInput,
+  TAccountQuoteMint extends InstructionAccountInput,
+  TAccountVault extends InstructionAccountInput,
+  TAccountWalletToken extends InstructionAccountInput,
+  TAccountTokenProgram extends InstructionAccountInput,
+  TAccountAssociatedTokenProgram extends InstructionAccountInput,
+  TAccountSystemProgram extends InstructionAccountInput,
   TProgramAddress extends Address = typeof BESTCROW_PROGRAM_ADDRESS,
 >(
   input: ClaimRefundInput<
     TAccountCaller,
     TAccountCampaign,
     TAccountWallet,
-    TAccountBacker
+    TAccountBacker,
+    TAccountQuoteMint,
+    TAccountVault,
+    TAccountWalletToken,
+    TAccountTokenProgram,
+    TAccountAssociatedTokenProgram,
+    TAccountSystemProgram
   >,
   config?: { programAddress?: TProgramAddress },
 ): ClaimRefundInstruction<
@@ -272,6 +487,30 @@ export function getClaimRefundInstruction<
   ResolvedInstructionAccountMeta<
     TAccountBacker,
     InstructionAccountInputAddress<TAccountBacker>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountQuoteMint,
+    InstructionAccountInputAddress<TAccountQuoteMint>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountVault,
+    InstructionAccountInputAddress<TAccountVault>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountWalletToken,
+    InstructionAccountInputAddress<TAccountWalletToken>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountTokenProgram,
+    InstructionAccountInputAddress<TAccountTokenProgram>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountAssociatedTokenProgram,
+    InstructionAccountInputAddress<TAccountAssociatedTokenProgram>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountSystemProgram,
+    InstructionAccountInputAddress<TAccountSystemProgram>
   >
 > {
   // Program address.
@@ -282,7 +521,7 @@ export function getClaimRefundInstruction<
 
   // Original accounts.
   const originalAccounts = {
-    caller: { value: input.caller ?? null, isSigner: true, isWritable: false },
+    caller: { value: input.caller ?? null, isSigner: true, isWritable: true },
     campaign: {
       value: input.campaign ?? null,
       isSigner: false,
@@ -290,11 +529,51 @@ export function getClaimRefundInstruction<
     },
     wallet: { value: input.wallet ?? null, isSigner: false, isWritable: true },
     backer: { value: input.backer ?? null, isSigner: false, isWritable: true },
+    quoteMint: {
+      value: input.quoteMint ?? null,
+      isSigner: false,
+      isWritable: false,
+    },
+    vault: { value: input.vault ?? null, isSigner: false, isWritable: true },
+    walletToken: {
+      value: input.walletToken ?? null,
+      isSigner: false,
+      isWritable: true,
+    },
+    tokenProgram: {
+      value: input.tokenProgram ?? null,
+      isSigner: false,
+      isWritable: false,
+    },
+    associatedTokenProgram: {
+      value: input.associatedTokenProgram ?? null,
+      isSigner: false,
+      isWritable: false,
+    },
+    systemProgram: {
+      value: input.systemProgram ?? null,
+      isSigner: false,
+      isWritable: false,
+    },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
     ResolvedInstructionAccount
   >;
+
+  // Resolve default values.
+  if (!accounts.tokenProgram.value) {
+    accounts.tokenProgram.value =
+      "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" as Address<"TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA">;
+  }
+  if (!accounts.associatedTokenProgram.value) {
+    accounts.associatedTokenProgram.value =
+      "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL" as Address<"ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL">;
+  }
+  if (!accounts.systemProgram.value) {
+    accounts.systemProgram.value =
+      "11111111111111111111111111111111" as Address<"11111111111111111111111111111111">;
+  }
 
   return Object.freeze({
     accounts: [
@@ -302,6 +581,12 @@ export function getClaimRefundInstruction<
       getAccountMeta("campaign", accounts.campaign),
       getAccountMeta("wallet", accounts.wallet),
       getAccountMeta("backer", accounts.backer),
+      getAccountMeta("quoteMint", accounts.quoteMint),
+      getAccountMeta("vault", accounts.vault),
+      getAccountMeta("walletToken", accounts.walletToken),
+      getAccountMeta("tokenProgram", accounts.tokenProgram),
+      getAccountMeta("associatedTokenProgram", accounts.associatedTokenProgram),
+      getAccountMeta("systemProgram", accounts.systemProgram),
     ],
     data: getClaimRefundInstructionDataEncoder().encode({}),
     programAddress,
@@ -322,6 +607,30 @@ export function getClaimRefundInstruction<
     ResolvedInstructionAccountMeta<
       TAccountBacker,
       InstructionAccountInputAddress<TAccountBacker>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountQuoteMint,
+      InstructionAccountInputAddress<TAccountQuoteMint>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountVault,
+      InstructionAccountInputAddress<TAccountVault>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountWalletToken,
+      InstructionAccountInputAddress<TAccountWalletToken>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountTokenProgram,
+      InstructionAccountInputAddress<TAccountTokenProgram>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountAssociatedTokenProgram,
+      InstructionAccountInputAddress<TAccountAssociatedTokenProgram>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountSystemProgram,
+      InstructionAccountInputAddress<TAccountSystemProgram>
     >
   >);
 }
@@ -336,6 +645,12 @@ export type ParsedClaimRefundInstruction<
     campaign: TAccountMetas[1];
     wallet: TAccountMetas[2];
     backer: TAccountMetas[3];
+    quoteMint: TAccountMetas[4];
+    vault: TAccountMetas[5];
+    walletToken: TAccountMetas[6];
+    tokenProgram: TAccountMetas[7];
+    associatedTokenProgram: TAccountMetas[8];
+    systemProgram: TAccountMetas[9];
   };
   data: ClaimRefundInstructionData;
 };
@@ -348,12 +663,12 @@ export function parseClaimRefundInstruction<
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>,
 ): ParsedClaimRefundInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 4) {
+  if (instruction.accounts.length < 10) {
     throw new SolanaError(
       SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
       {
         actualAccountMetas: instruction.accounts.length,
-        expectedAccountMetas: 4,
+        expectedAccountMetas: 10,
       },
     );
   }
@@ -370,6 +685,12 @@ export function parseClaimRefundInstruction<
       campaign: getNextAccount(),
       wallet: getNextAccount(),
       backer: getNextAccount(),
+      quoteMint: getNextAccount(),
+      vault: getNextAccount(),
+      walletToken: getNextAccount(),
+      tokenProgram: getNextAccount(),
+      associatedTokenProgram: getNextAccount(),
+      systemProgram: getNextAccount(),
     },
     data: getClaimRefundInstructionDataDecoder().decode(instruction.data),
   };

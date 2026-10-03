@@ -91,6 +91,14 @@ struct DaoPrefix {
     squads_multisig_vault: Pubkey,
     base_mint: Pubkey,
     quote_mint: Pubkey,
+    proposal_count: u32,
+    pass_threshold_bps: u16,
+    seconds_per_proposal: u32,
+    twap_initial_observation: u128,
+    twap_max_observation_change_per_update: u128,
+    twap_start_delay_seconds: u32,
+    min_quote_futarchic_liquidity: u64,
+    min_base_futarchic_liquidity: u64,
 }
 
 fn checked_body<'a>(
@@ -136,7 +144,12 @@ pub fn validate_proposal(
     Ok(proposal)
 }
 
-pub fn validate_dao(info: &AccountInfo, base_mint: Pubkey, quote_mint: Pubkey) -> Result<()> {
+pub fn validate_dao(
+    info: &AccountInfo,
+    base_mint: Pubkey,
+    quote_mint: Pubkey,
+    market_timeout_secs: i64,
+) -> Result<()> {
     let body = checked_body(info, DAO_DISCRIMINATOR)?;
     let dao = DaoPrefix::deserialize(&mut &body[..])
         .map_err(|_| error!(BestcrowError::InvalidMetaDaoAccount))?;
@@ -158,6 +171,23 @@ pub fn validate_dao(info: &AccountInfo, base_mint: Pubkey, quote_mint: Pubkey) -
     require_keys_eq!(
         dao.amm.quote_mint,
         quote_mint,
+        BestcrowError::InvalidMarketBinding
+    );
+    require!(
+        dao.seconds_per_proposal >= 86_400
+            && (dao.seconds_per_proposal as i64) < market_timeout_secs,
+        BestcrowError::InvalidMarketBinding
+    );
+    require!(
+        dao.min_base_futarchic_liquidity > 0 && dao.min_quote_futarchic_liquidity > 0,
+        BestcrowError::InvalidMarketBinding
+    );
+    let PoolState::Spot { spot } = dao.amm.state else {
+        return err!(BestcrowError::InvalidMarketBinding);
+    };
+    require!(
+        spot.base_reserves / 2 >= dao.min_base_futarchic_liquidity
+            && spot.quote_reserves / 2 >= dao.min_quote_futarchic_liquidity,
         BestcrowError::InvalidMarketBinding
     );
     Ok(())

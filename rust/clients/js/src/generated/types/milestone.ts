@@ -8,6 +8,8 @@
 
 import {
   combineCodec,
+  getAddressDecoder,
+  getAddressEncoder,
   getArrayDecoder,
   getArrayEncoder,
   getI64Decoder,
@@ -18,6 +20,7 @@ import {
   getU64Encoder,
   getU8Decoder,
   getU8Encoder,
+  type Address,
   type FixedSizeCodec,
   type FixedSizeDecoder,
   type FixedSizeEncoder,
@@ -32,26 +35,20 @@ import {
 export type Milestone = {
   amount: bigint;
   dueAt: bigint;
+  proposal: Address;
   evidenceHash: Array<number>;
   submittedAt: bigint;
-  voteDeadline: bigint;
-  yesWeight: bigint;
-  noWeight: bigint;
-  replyDeadline: bigint;
-  round: number;
+  marketDeadline: bigint;
   status: MilestoneStatus;
 };
 
 export type MilestoneArgs = {
   amount: number | bigint;
   dueAt: number | bigint;
+  proposal: Address;
   evidenceHash: Array<number>;
   submittedAt: number | bigint;
-  voteDeadline: number | bigint;
-  yesWeight: number | bigint;
-  noWeight: number | bigint;
-  replyDeadline: number | bigint;
-  round: number;
+  marketDeadline: number | bigint;
   status: MilestoneStatusArgs;
 };
 
@@ -59,13 +56,10 @@ export function getMilestoneEncoder(): FixedSizeEncoder<MilestoneArgs> {
   return getStructEncoder([
     ["amount", getU64Encoder()],
     ["dueAt", getI64Encoder()],
+    ["proposal", getAddressEncoder()],
     ["evidenceHash", getArrayEncoder(getU8Encoder(), { size: 32 })],
     ["submittedAt", getI64Encoder()],
-    ["voteDeadline", getI64Encoder()],
-    ["yesWeight", getU64Encoder()],
-    ["noWeight", getU64Encoder()],
-    ["replyDeadline", getI64Encoder()],
-    ["round", getU8Encoder()],
+    ["marketDeadline", getI64Encoder()],
     ["status", getMilestoneStatusEncoder()],
   ]);
 }
@@ -74,13 +68,10 @@ export function getMilestoneDecoder(): FixedSizeDecoder<Milestone> {
   return getStructDecoder([
     ["amount", getU64Decoder()],
     ["dueAt", getI64Decoder()],
+    ["proposal", getAddressDecoder()],
     ["evidenceHash", getArrayDecoder(getU8Decoder(), { size: 32 })],
     ["submittedAt", getI64Decoder()],
-    ["voteDeadline", getI64Decoder()],
-    ["yesWeight", getU64Decoder()],
-    ["noWeight", getU64Decoder()],
-    ["replyDeadline", getI64Decoder()],
-    ["round", getU8Decoder()],
+    ["marketDeadline", getI64Decoder()],
     ["status", getMilestoneStatusDecoder()],
   ]);
 }

@@ -1,4 +1,5 @@
 use crate::{
+    constants::{USDC_DEVNET_MINT, USDC_MAINNET_MINT},
     error::BestcrowError,
     events::{CampaignCreated, CampaignFinalized},
     meta_dao::{self, ProposalState},
@@ -60,6 +61,15 @@ pub struct CreateCampaign<'info> {
 
 pub fn create_campaign(ctx: Context<CreateCampaign>, args: CreateCampaignArgs) -> Result<()> {
     validate_terms(&args, Clock::get()?.unix_timestamp)?;
+    require!(
+        ctx.accounts.quote_mint.key() == USDC_DEVNET_MINT
+            || ctx.accounts.quote_mint.key() == USDC_MAINNET_MINT,
+        BestcrowError::InvalidTokenAccount
+    );
+    require!(
+        ctx.accounts.quote_mint.decimals == 6,
+        BestcrowError::InvalidTokenAccount
+    );
     require_keys_neq!(
         ctx.accounts.base_mint.key(),
         ctx.accounts.quote_mint.key(),
@@ -69,6 +79,7 @@ pub fn create_campaign(ctx: Context<CreateCampaign>, args: CreateCampaignArgs) -
         &ctx.accounts.meta_dao.to_account_info(),
         ctx.accounts.base_mint.key(),
         ctx.accounts.quote_mint.key(),
+        args.market_timeout_secs,
     )?;
     require!(
         ctx.remaining_accounts.len() == args.milestones.len(),
@@ -84,6 +95,12 @@ pub fn create_campaign(ctx: Context<CreateCampaign>, args: CreateCampaignArgs) -
         require!(
             matches!(proposal.state, ProposalState::Draft { .. }),
             BestcrowError::InvalidProposalState
+        );
+        require!(
+            !proposal.is_team_sponsored
+                && proposal.timestamp_enqueued == 0
+                && proposal.duration_in_seconds as i64 <= args.market_timeout_secs,
+            BestcrowError::InvalidMarketBinding
         );
     }
 

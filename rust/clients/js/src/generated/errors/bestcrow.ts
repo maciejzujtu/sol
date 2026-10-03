@@ -34,24 +34,32 @@ export const BESTCROW_ERROR__WRONG_PARTICIPANT = 0x1777; // 6007
 export const BESTCROW_ERROR__DEADLINE_PASSED = 0x1778; // 6008
 /** DeadlineOpen: Deadline has not passed */
 export const BESTCROW_ERROR__DEADLINE_OPEN = 0x1779; // 6009
-/** WrongRound: Wrong milestone or voting round */
-export const BESTCROW_ERROR__WRONG_ROUND = 0x177a; // 6010
-/** NoVotingWeight: Vote weight is unavailable */
-export const BESTCROW_ERROR__NO_VOTING_WEIGHT = 0x177b; // 6011
+/** WrongMilestone: Wrong milestone or MetaDAO proposal */
+export const BESTCROW_ERROR__WRONG_MILESTONE = 0x177a; // 6010
 /** Arithmetic: Arithmetic overflow */
-export const BESTCROW_ERROR__ARITHMETIC = 0x177c; // 6012
+export const BESTCROW_ERROR__ARITHMETIC = 0x177b; // 6011
 /** InsufficientEscrow: Escrow balance is insufficient */
-export const BESTCROW_ERROR__INSUFFICIENT_ESCROW = 0x177d; // 6013
+export const BESTCROW_ERROR__INSUFFICIENT_ESCROW = 0x177c; // 6012
 /** RefundUnavailable: Refund is not available */
-export const BESTCROW_ERROR__REFUND_UNAVAILABLE = 0x177e; // 6014
+export const BESTCROW_ERROR__REFUND_UNAVAILABLE = 0x177d; // 6013
 /** AlreadyClaimed: Refund already claimed */
-export const BESTCROW_ERROR__ALREADY_CLAIMED = 0x177f; // 6015
+export const BESTCROW_ERROR__ALREADY_CLAIMED = 0x177e; // 6014
 /** RefundsOutstanding: Refunds are still outstanding */
-export const BESTCROW_ERROR__REFUNDS_OUTSTANDING = 0x1780; // 6016
+export const BESTCROW_ERROR__REFUNDS_OUTSTANDING = 0x177f; // 6015
 /** EmptyEvidence: Evidence hash must be nonzero */
-export const BESTCROW_ERROR__EMPTY_EVIDENCE = 0x1781; // 6017
-/** ReceiptStillNeeded: Account is still needed for funding, voting, or refund */
-export const BESTCROW_ERROR__RECEIPT_STILL_NEEDED = 0x1782; // 6018
+export const BESTCROW_ERROR__EMPTY_EVIDENCE = 0x1780; // 6016
+/** ReceiptStillNeeded: Account is still needed for funding or refund */
+export const BESTCROW_ERROR__RECEIPT_STILL_NEEDED = 0x1781; // 6017
+/** InvalidMetaDaoAccount: MetaDAO account has an unexpected owner, discriminator, or layout */
+export const BESTCROW_ERROR__INVALID_META_DAO_ACCOUNT = 0x1782; // 6018
+/** InvalidMarketBinding: MetaDAO DAO and proposal are not bound to this campaign */
+export const BESTCROW_ERROR__INVALID_MARKET_BINDING = 0x1783; // 6019
+/** InvalidProposalState: MetaDAO proposal is not in the required state */
+export const BESTCROW_ERROR__INVALID_PROPOSAL_STATE = 0x1784; // 6020
+/** MarketStillLive: MetaDAO market is still live */
+export const BESTCROW_ERROR__MARKET_STILL_LIVE = 0x1785; // 6021
+/** InvalidTokenAccount: Token mint, vault, or recipient account does not match the campaign */
+export const BESTCROW_ERROR__INVALID_TOKEN_ACCOUNT = 0x1786; // 6022
 
 export type BestcrowError =
   | typeof BESTCROW_ERROR__ALREADY_CLAIMED
@@ -64,14 +72,18 @@ export type BestcrowError =
   | typeof BESTCROW_ERROR__GOAL_EXCEEDED
   | typeof BESTCROW_ERROR__INSUFFICIENT_ESCROW
   | typeof BESTCROW_ERROR__INVALID_CAMPAIGN_STATE
+  | typeof BESTCROW_ERROR__INVALID_MARKET_BINDING
+  | typeof BESTCROW_ERROR__INVALID_META_DAO_ACCOUNT
   | typeof BESTCROW_ERROR__INVALID_MILESTONE_STATE
+  | typeof BESTCROW_ERROR__INVALID_PROPOSAL_STATE
   | typeof BESTCROW_ERROR__INVALID_TERMS
-  | typeof BESTCROW_ERROR__NO_VOTING_WEIGHT
+  | typeof BESTCROW_ERROR__INVALID_TOKEN_ACCOUNT
+  | typeof BESTCROW_ERROR__MARKET_STILL_LIVE
   | typeof BESTCROW_ERROR__RECEIPT_STILL_NEEDED
   | typeof BESTCROW_ERROR__REFUNDS_OUTSTANDING
   | typeof BESTCROW_ERROR__REFUND_UNAVAILABLE
+  | typeof BESTCROW_ERROR__WRONG_MILESTONE
   | typeof BESTCROW_ERROR__WRONG_PARTICIPANT
-  | typeof BESTCROW_ERROR__WRONG_ROUND
   | typeof BESTCROW_ERROR__ZERO_AMOUNT;
 
 let bestcrowErrorMessages: Record<BestcrowError, string> | undefined;
@@ -87,14 +99,18 @@ if (process.env["NODE_ENV"] !== "production") {
     [BESTCROW_ERROR__GOAL_EXCEEDED]: `Campaign goal would be exceeded`,
     [BESTCROW_ERROR__INSUFFICIENT_ESCROW]: `Escrow balance is insufficient`,
     [BESTCROW_ERROR__INVALID_CAMPAIGN_STATE]: `Campaign is not in the required state`,
+    [BESTCROW_ERROR__INVALID_MARKET_BINDING]: `MetaDAO DAO and proposal are not bound to this campaign`,
+    [BESTCROW_ERROR__INVALID_META_DAO_ACCOUNT]: `MetaDAO account has an unexpected owner, discriminator, or layout`,
     [BESTCROW_ERROR__INVALID_MILESTONE_STATE]: `Milestone is not in the required state`,
+    [BESTCROW_ERROR__INVALID_PROPOSAL_STATE]: `MetaDAO proposal is not in the required state`,
     [BESTCROW_ERROR__INVALID_TERMS]: `Invalid campaign terms`,
-    [BESTCROW_ERROR__NO_VOTING_WEIGHT]: `Vote weight is unavailable`,
-    [BESTCROW_ERROR__RECEIPT_STILL_NEEDED]: `Account is still needed for funding, voting, or refund`,
+    [BESTCROW_ERROR__INVALID_TOKEN_ACCOUNT]: `Token mint, vault, or recipient account does not match the campaign`,
+    [BESTCROW_ERROR__MARKET_STILL_LIVE]: `MetaDAO market is still live`,
+    [BESTCROW_ERROR__RECEIPT_STILL_NEEDED]: `Account is still needed for funding or refund`,
     [BESTCROW_ERROR__REFUNDS_OUTSTANDING]: `Refunds are still outstanding`,
     [BESTCROW_ERROR__REFUND_UNAVAILABLE]: `Refund is not available`,
+    [BESTCROW_ERROR__WRONG_MILESTONE]: `Wrong milestone or MetaDAO proposal`,
     [BESTCROW_ERROR__WRONG_PARTICIPANT]: `Wrong creator or backer account`,
-    [BESTCROW_ERROR__WRONG_ROUND]: `Wrong milestone or voting round`,
     [BESTCROW_ERROR__ZERO_AMOUNT]: `Amount must be positive`,
   };
 }

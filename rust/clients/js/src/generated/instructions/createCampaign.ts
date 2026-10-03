@@ -10,8 +10,10 @@ import {
   combineCodec,
   fixDecoderSize,
   fixEncoderSize,
+  getAddressEncoder,
   getBytesDecoder,
   getBytesEncoder,
+  getProgramDerivedAddress,
   getStructDecoder,
   getStructEncoder,
   SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
@@ -33,6 +35,7 @@ import {
 } from "@solana/kit";
 import {
   getAccountMetaFactory,
+  getAddressFromResolvedInstructionAccount,
   type InstructionAccountInput,
   type InstructionAccountInputAddress,
   type InstructionSignerInput,
@@ -61,6 +64,16 @@ export type CreateCampaignInstruction<
   TProgram extends string = typeof BESTCROW_PROGRAM_ADDRESS,
   TAccountCreator extends string | AccountMeta<string> = string,
   TAccountCampaign extends string | AccountMeta<string> = string,
+  TAccountDaoBinding extends string | AccountMeta<string> = string,
+  TAccountQuoteMint extends string | AccountMeta<string> = string,
+  TAccountBaseMint extends string | AccountMeta<string> = string,
+  TAccountVault extends string | AccountMeta<string> = string,
+  TAccountCreatorToken extends string | AccountMeta<string> = string,
+  TAccountMetaDao extends string | AccountMeta<string> = string,
+  TAccountTokenProgram extends string | AccountMeta<string> =
+    "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+  TAccountAssociatedTokenProgram extends string | AccountMeta<string> =
+    "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
   TAccountSystemProgram extends string | AccountMeta<string> =
     "11111111111111111111111111111111",
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
@@ -75,6 +88,30 @@ export type CreateCampaignInstruction<
       TAccountCampaign extends string
         ? WritableAccount<TAccountCampaign>
         : TAccountCampaign,
+      TAccountDaoBinding extends string
+        ? WritableAccount<TAccountDaoBinding>
+        : TAccountDaoBinding,
+      TAccountQuoteMint extends string
+        ? ReadonlyAccount<TAccountQuoteMint>
+        : TAccountQuoteMint,
+      TAccountBaseMint extends string
+        ? ReadonlyAccount<TAccountBaseMint>
+        : TAccountBaseMint,
+      TAccountVault extends string
+        ? WritableAccount<TAccountVault>
+        : TAccountVault,
+      TAccountCreatorToken extends string
+        ? WritableAccount<TAccountCreatorToken>
+        : TAccountCreatorToken,
+      TAccountMetaDao extends string
+        ? ReadonlyAccount<TAccountMetaDao>
+        : TAccountMetaDao,
+      TAccountTokenProgram extends string
+        ? ReadonlyAccount<TAccountTokenProgram>
+        : TAccountTokenProgram,
+      TAccountAssociatedTokenProgram extends string
+        ? ReadonlyAccount<TAccountAssociatedTokenProgram>
+        : TAccountAssociatedTokenProgram,
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
@@ -118,14 +155,343 @@ export function getCreateCampaignInstructionDataCodec(): Codec<
   );
 }
 
-export type CreateCampaignInput<
+export type CreateCampaignAsyncInput<
   TAccountCreator extends InstructionSignerInput = InstructionSignerInput,
   TAccountCampaign extends InstructionAccountInput = InstructionAccountInput,
+  TAccountDaoBinding extends InstructionAccountInput = InstructionAccountInput,
+  TAccountQuoteMint extends InstructionAccountInput = InstructionAccountInput,
+  TAccountBaseMint extends InstructionAccountInput = InstructionAccountInput,
+  TAccountVault extends InstructionAccountInput = InstructionAccountInput,
+  TAccountCreatorToken extends InstructionAccountInput =
+    InstructionAccountInput,
+  TAccountMetaDao extends InstructionAccountInput = InstructionAccountInput,
+  TAccountTokenProgram extends InstructionAccountInput =
+    InstructionAccountInput,
+  TAccountAssociatedTokenProgram extends InstructionAccountInput =
+    InstructionAccountInput,
   TAccountSystemProgram extends InstructionAccountInput =
     InstructionAccountInput,
 > = {
   creator: TAccountCreator;
   campaign: TAccountCampaign;
+  daoBinding?: TAccountDaoBinding;
+  quoteMint: TAccountQuoteMint;
+  baseMint: TAccountBaseMint;
+  vault?: TAccountVault;
+  creatorToken?: TAccountCreatorToken;
+  metaDao: TAccountMetaDao;
+  tokenProgram?: TAccountTokenProgram;
+  associatedTokenProgram?: TAccountAssociatedTokenProgram;
+  systemProgram?: TAccountSystemProgram;
+  args: CreateCampaignInstructionDataArgs["args"];
+};
+
+export async function getCreateCampaignInstructionAsync<
+  TAccountCreator extends InstructionSignerInput,
+  TAccountCampaign extends InstructionAccountInput,
+  TAccountDaoBinding extends InstructionAccountInput,
+  TAccountQuoteMint extends InstructionAccountInput,
+  TAccountBaseMint extends InstructionAccountInput,
+  TAccountVault extends InstructionAccountInput,
+  TAccountCreatorToken extends InstructionAccountInput,
+  TAccountMetaDao extends InstructionAccountInput,
+  TAccountTokenProgram extends InstructionAccountInput,
+  TAccountAssociatedTokenProgram extends InstructionAccountInput,
+  TAccountSystemProgram extends InstructionAccountInput,
+  TProgramAddress extends Address = typeof BESTCROW_PROGRAM_ADDRESS,
+>(
+  input: CreateCampaignAsyncInput<
+    TAccountCreator,
+    TAccountCampaign,
+    TAccountDaoBinding,
+    TAccountQuoteMint,
+    TAccountBaseMint,
+    TAccountVault,
+    TAccountCreatorToken,
+    TAccountMetaDao,
+    TAccountTokenProgram,
+    TAccountAssociatedTokenProgram,
+    TAccountSystemProgram
+  >,
+  config?: { programAddress?: TProgramAddress },
+): Promise<
+  CreateCampaignInstruction<
+    TProgramAddress,
+    ResolvedInstructionAccountMeta<
+      TAccountCreator,
+      InstructionAccountInputAddress<TAccountCreator>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountCampaign,
+      InstructionAccountInputAddress<TAccountCampaign>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountDaoBinding,
+      InstructionAccountInputAddress<TAccountDaoBinding>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountQuoteMint,
+      InstructionAccountInputAddress<TAccountQuoteMint>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountBaseMint,
+      InstructionAccountInputAddress<TAccountBaseMint>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountVault,
+      InstructionAccountInputAddress<TAccountVault>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountCreatorToken,
+      InstructionAccountInputAddress<TAccountCreatorToken>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountMetaDao,
+      InstructionAccountInputAddress<TAccountMetaDao>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountTokenProgram,
+      InstructionAccountInputAddress<TAccountTokenProgram>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountAssociatedTokenProgram,
+      InstructionAccountInputAddress<TAccountAssociatedTokenProgram>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountSystemProgram,
+      InstructionAccountInputAddress<TAccountSystemProgram>
+    >
+  >
+> {
+  // Program address.
+  const programAddress = config?.programAddress ?? BESTCROW_PROGRAM_ADDRESS;
+
+  // Account meta helper.
+  const getAccountMeta = getAccountMetaFactory(programAddress, "programId");
+
+  // Original accounts.
+  const originalAccounts = {
+    creator: { value: input.creator ?? null, isSigner: true, isWritable: true },
+    campaign: {
+      value: input.campaign ?? null,
+      isSigner: false,
+      isWritable: true,
+    },
+    daoBinding: {
+      value: input.daoBinding ?? null,
+      isSigner: false,
+      isWritable: true,
+    },
+    quoteMint: {
+      value: input.quoteMint ?? null,
+      isSigner: false,
+      isWritable: false,
+    },
+    baseMint: {
+      value: input.baseMint ?? null,
+      isSigner: false,
+      isWritable: false,
+    },
+    vault: { value: input.vault ?? null, isSigner: false, isWritable: true },
+    creatorToken: {
+      value: input.creatorToken ?? null,
+      isSigner: false,
+      isWritable: true,
+    },
+    metaDao: {
+      value: input.metaDao ?? null,
+      isSigner: false,
+      isWritable: false,
+    },
+    tokenProgram: {
+      value: input.tokenProgram ?? null,
+      isSigner: false,
+      isWritable: false,
+    },
+    associatedTokenProgram: {
+      value: input.associatedTokenProgram ?? null,
+      isSigner: false,
+      isWritable: false,
+    },
+    systemProgram: {
+      value: input.systemProgram ?? null,
+      isSigner: false,
+      isWritable: false,
+    },
+  };
+  const accounts = originalAccounts as Record<
+    keyof typeof originalAccounts,
+    ResolvedInstructionAccount
+  >;
+
+  // Original args.
+  const args = { ...input };
+
+  // Resolve default values.
+  if (!accounts.daoBinding.value) {
+    accounts.daoBinding.value = await getProgramDerivedAddress({
+      programAddress,
+      seeds: [
+        getBytesEncoder().encode(
+          new Uint8Array([100, 97, 111, 45, 98, 105, 110, 100, 105, 110, 103]),
+        ),
+        getAddressEncoder().encode(
+          getAddressFromResolvedInstructionAccount(
+            "metaDao",
+            accounts.metaDao.value,
+          ),
+        ),
+      ],
+    });
+  }
+  if (!accounts.vault.value) {
+    accounts.vault.value = await getProgramDerivedAddress({
+      programAddress,
+      seeds: [
+        getBytesEncoder().encode(new Uint8Array([118, 97, 117, 108, 116])),
+        getAddressEncoder().encode(
+          getAddressFromResolvedInstructionAccount(
+            "campaign",
+            accounts.campaign.value,
+          ),
+        ),
+      ],
+    });
+  }
+  if (!accounts.creatorToken.value) {
+    accounts.creatorToken.value = await getProgramDerivedAddress({
+      programAddress:
+        "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL" as Address<"ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL">,
+      seeds: [
+        getAddressEncoder().encode(
+          getAddressFromResolvedInstructionAccount(
+            "creator",
+            accounts.creator.value,
+          ),
+        ),
+        getBytesEncoder().encode(
+          new Uint8Array([
+            6, 221, 246, 225, 215, 101, 161, 147, 217, 203, 225, 70, 206, 235,
+            121, 172, 28, 180, 133, 237, 95, 91, 55, 145, 58, 140, 245, 133,
+            126, 255, 0, 169,
+          ]),
+        ),
+        getAddressEncoder().encode(
+          getAddressFromResolvedInstructionAccount(
+            "quoteMint",
+            accounts.quoteMint.value,
+          ),
+        ),
+      ],
+    });
+  }
+  if (!accounts.tokenProgram.value) {
+    accounts.tokenProgram.value =
+      "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" as Address<"TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA">;
+  }
+  if (!accounts.associatedTokenProgram.value) {
+    accounts.associatedTokenProgram.value =
+      "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL" as Address<"ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL">;
+  }
+  if (!accounts.systemProgram.value) {
+    accounts.systemProgram.value =
+      "11111111111111111111111111111111" as Address<"11111111111111111111111111111111">;
+  }
+
+  return Object.freeze({
+    accounts: [
+      getAccountMeta("creator", accounts.creator),
+      getAccountMeta("campaign", accounts.campaign),
+      getAccountMeta("daoBinding", accounts.daoBinding),
+      getAccountMeta("quoteMint", accounts.quoteMint),
+      getAccountMeta("baseMint", accounts.baseMint),
+      getAccountMeta("vault", accounts.vault),
+      getAccountMeta("creatorToken", accounts.creatorToken),
+      getAccountMeta("metaDao", accounts.metaDao),
+      getAccountMeta("tokenProgram", accounts.tokenProgram),
+      getAccountMeta("associatedTokenProgram", accounts.associatedTokenProgram),
+      getAccountMeta("systemProgram", accounts.systemProgram),
+    ],
+    data: getCreateCampaignInstructionDataEncoder().encode(
+      args as CreateCampaignInstructionDataArgs,
+    ),
+    programAddress,
+  } as CreateCampaignInstruction<
+    TProgramAddress,
+    ResolvedInstructionAccountMeta<
+      TAccountCreator,
+      InstructionAccountInputAddress<TAccountCreator>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountCampaign,
+      InstructionAccountInputAddress<TAccountCampaign>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountDaoBinding,
+      InstructionAccountInputAddress<TAccountDaoBinding>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountQuoteMint,
+      InstructionAccountInputAddress<TAccountQuoteMint>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountBaseMint,
+      InstructionAccountInputAddress<TAccountBaseMint>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountVault,
+      InstructionAccountInputAddress<TAccountVault>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountCreatorToken,
+      InstructionAccountInputAddress<TAccountCreatorToken>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountMetaDao,
+      InstructionAccountInputAddress<TAccountMetaDao>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountTokenProgram,
+      InstructionAccountInputAddress<TAccountTokenProgram>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountAssociatedTokenProgram,
+      InstructionAccountInputAddress<TAccountAssociatedTokenProgram>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountSystemProgram,
+      InstructionAccountInputAddress<TAccountSystemProgram>
+    >
+  >);
+}
+
+export type CreateCampaignInput<
+  TAccountCreator extends InstructionSignerInput = InstructionSignerInput,
+  TAccountCampaign extends InstructionAccountInput = InstructionAccountInput,
+  TAccountDaoBinding extends InstructionAccountInput = InstructionAccountInput,
+  TAccountQuoteMint extends InstructionAccountInput = InstructionAccountInput,
+  TAccountBaseMint extends InstructionAccountInput = InstructionAccountInput,
+  TAccountVault extends InstructionAccountInput = InstructionAccountInput,
+  TAccountCreatorToken extends InstructionAccountInput =
+    InstructionAccountInput,
+  TAccountMetaDao extends InstructionAccountInput = InstructionAccountInput,
+  TAccountTokenProgram extends InstructionAccountInput =
+    InstructionAccountInput,
+  TAccountAssociatedTokenProgram extends InstructionAccountInput =
+    InstructionAccountInput,
+  TAccountSystemProgram extends InstructionAccountInput =
+    InstructionAccountInput,
+> = {
+  creator: TAccountCreator;
+  campaign: TAccountCampaign;
+  daoBinding: TAccountDaoBinding;
+  quoteMint: TAccountQuoteMint;
+  baseMint: TAccountBaseMint;
+  vault: TAccountVault;
+  creatorToken: TAccountCreatorToken;
+  metaDao: TAccountMetaDao;
+  tokenProgram?: TAccountTokenProgram;
+  associatedTokenProgram?: TAccountAssociatedTokenProgram;
   systemProgram?: TAccountSystemProgram;
   args: CreateCampaignInstructionDataArgs["args"];
 };
@@ -133,12 +499,28 @@ export type CreateCampaignInput<
 export function getCreateCampaignInstruction<
   TAccountCreator extends InstructionSignerInput,
   TAccountCampaign extends InstructionAccountInput,
+  TAccountDaoBinding extends InstructionAccountInput,
+  TAccountQuoteMint extends InstructionAccountInput,
+  TAccountBaseMint extends InstructionAccountInput,
+  TAccountVault extends InstructionAccountInput,
+  TAccountCreatorToken extends InstructionAccountInput,
+  TAccountMetaDao extends InstructionAccountInput,
+  TAccountTokenProgram extends InstructionAccountInput,
+  TAccountAssociatedTokenProgram extends InstructionAccountInput,
   TAccountSystemProgram extends InstructionAccountInput,
   TProgramAddress extends Address = typeof BESTCROW_PROGRAM_ADDRESS,
 >(
   input: CreateCampaignInput<
     TAccountCreator,
     TAccountCampaign,
+    TAccountDaoBinding,
+    TAccountQuoteMint,
+    TAccountBaseMint,
+    TAccountVault,
+    TAccountCreatorToken,
+    TAccountMetaDao,
+    TAccountTokenProgram,
+    TAccountAssociatedTokenProgram,
     TAccountSystemProgram
   >,
   config?: { programAddress?: TProgramAddress },
@@ -151,6 +533,38 @@ export function getCreateCampaignInstruction<
   ResolvedInstructionAccountMeta<
     TAccountCampaign,
     InstructionAccountInputAddress<TAccountCampaign>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountDaoBinding,
+    InstructionAccountInputAddress<TAccountDaoBinding>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountQuoteMint,
+    InstructionAccountInputAddress<TAccountQuoteMint>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountBaseMint,
+    InstructionAccountInputAddress<TAccountBaseMint>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountVault,
+    InstructionAccountInputAddress<TAccountVault>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountCreatorToken,
+    InstructionAccountInputAddress<TAccountCreatorToken>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountMetaDao,
+    InstructionAccountInputAddress<TAccountMetaDao>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountTokenProgram,
+    InstructionAccountInputAddress<TAccountTokenProgram>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountAssociatedTokenProgram,
+    InstructionAccountInputAddress<TAccountAssociatedTokenProgram>
   >,
   ResolvedInstructionAccountMeta<
     TAccountSystemProgram,
@@ -171,6 +585,42 @@ export function getCreateCampaignInstruction<
       isSigner: false,
       isWritable: true,
     },
+    daoBinding: {
+      value: input.daoBinding ?? null,
+      isSigner: false,
+      isWritable: true,
+    },
+    quoteMint: {
+      value: input.quoteMint ?? null,
+      isSigner: false,
+      isWritable: false,
+    },
+    baseMint: {
+      value: input.baseMint ?? null,
+      isSigner: false,
+      isWritable: false,
+    },
+    vault: { value: input.vault ?? null, isSigner: false, isWritable: true },
+    creatorToken: {
+      value: input.creatorToken ?? null,
+      isSigner: false,
+      isWritable: true,
+    },
+    metaDao: {
+      value: input.metaDao ?? null,
+      isSigner: false,
+      isWritable: false,
+    },
+    tokenProgram: {
+      value: input.tokenProgram ?? null,
+      isSigner: false,
+      isWritable: false,
+    },
+    associatedTokenProgram: {
+      value: input.associatedTokenProgram ?? null,
+      isSigner: false,
+      isWritable: false,
+    },
     systemProgram: {
       value: input.systemProgram ?? null,
       isSigner: false,
@@ -186,6 +636,14 @@ export function getCreateCampaignInstruction<
   const args = { ...input };
 
   // Resolve default values.
+  if (!accounts.tokenProgram.value) {
+    accounts.tokenProgram.value =
+      "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" as Address<"TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA">;
+  }
+  if (!accounts.associatedTokenProgram.value) {
+    accounts.associatedTokenProgram.value =
+      "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL" as Address<"ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL">;
+  }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
       "11111111111111111111111111111111" as Address<"11111111111111111111111111111111">;
@@ -195,6 +653,14 @@ export function getCreateCampaignInstruction<
     accounts: [
       getAccountMeta("creator", accounts.creator),
       getAccountMeta("campaign", accounts.campaign),
+      getAccountMeta("daoBinding", accounts.daoBinding),
+      getAccountMeta("quoteMint", accounts.quoteMint),
+      getAccountMeta("baseMint", accounts.baseMint),
+      getAccountMeta("vault", accounts.vault),
+      getAccountMeta("creatorToken", accounts.creatorToken),
+      getAccountMeta("metaDao", accounts.metaDao),
+      getAccountMeta("tokenProgram", accounts.tokenProgram),
+      getAccountMeta("associatedTokenProgram", accounts.associatedTokenProgram),
       getAccountMeta("systemProgram", accounts.systemProgram),
     ],
     data: getCreateCampaignInstructionDataEncoder().encode(
@@ -212,6 +678,38 @@ export function getCreateCampaignInstruction<
       InstructionAccountInputAddress<TAccountCampaign>
     >,
     ResolvedInstructionAccountMeta<
+      TAccountDaoBinding,
+      InstructionAccountInputAddress<TAccountDaoBinding>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountQuoteMint,
+      InstructionAccountInputAddress<TAccountQuoteMint>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountBaseMint,
+      InstructionAccountInputAddress<TAccountBaseMint>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountVault,
+      InstructionAccountInputAddress<TAccountVault>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountCreatorToken,
+      InstructionAccountInputAddress<TAccountCreatorToken>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountMetaDao,
+      InstructionAccountInputAddress<TAccountMetaDao>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountTokenProgram,
+      InstructionAccountInputAddress<TAccountTokenProgram>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountAssociatedTokenProgram,
+      InstructionAccountInputAddress<TAccountAssociatedTokenProgram>
+    >,
+    ResolvedInstructionAccountMeta<
       TAccountSystemProgram,
       InstructionAccountInputAddress<TAccountSystemProgram>
     >
@@ -226,7 +724,15 @@ export type ParsedCreateCampaignInstruction<
   accounts: {
     creator: TAccountMetas[0];
     campaign: TAccountMetas[1];
-    systemProgram: TAccountMetas[2];
+    daoBinding: TAccountMetas[2];
+    quoteMint: TAccountMetas[3];
+    baseMint: TAccountMetas[4];
+    vault: TAccountMetas[5];
+    creatorToken: TAccountMetas[6];
+    metaDao: TAccountMetas[7];
+    tokenProgram: TAccountMetas[8];
+    associatedTokenProgram: TAccountMetas[9];
+    systemProgram: TAccountMetas[10];
   };
   data: CreateCampaignInstructionData;
 };
@@ -239,12 +745,12 @@ export function parseCreateCampaignInstruction<
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>,
 ): ParsedCreateCampaignInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 3) {
+  if (instruction.accounts.length < 11) {
     throw new SolanaError(
       SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
       {
         actualAccountMetas: instruction.accounts.length,
-        expectedAccountMetas: 3,
+        expectedAccountMetas: 11,
       },
     );
   }
@@ -259,6 +765,14 @@ export function parseCreateCampaignInstruction<
     accounts: {
       creator: getNextAccount(),
       campaign: getNextAccount(),
+      daoBinding: getNextAccount(),
+      quoteMint: getNextAccount(),
+      baseMint: getNextAccount(),
+      vault: getNextAccount(),
+      creatorToken: getNextAccount(),
+      metaDao: getNextAccount(),
+      tokenProgram: getNextAccount(),
+      associatedTokenProgram: getNextAccount(),
       systemProgram: getNextAccount(),
     },
     data: getCreateCampaignInstructionDataDecoder().decode(instruction.data),

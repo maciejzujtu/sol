@@ -7,16 +7,13 @@
  */
 
 export * from "./cancelCampaign";
-export * from "./castVote";
 export * from "./claimRefund";
 export * from "./closeBacker";
-export * from "./closeVoteReceipt";
 export * from "./createCampaign";
 export * from "./expireMilestone";
 export * from "./finalizeFunding";
-export * from "./finalizeVote";
 export * from "./pledge";
-export * from "./releaseMilestone";
+export * from "./resolveMilestone";
 export * from "./submitEvidence";
 export * from "./sweepDust";
 export * from "./withdrawPledge";

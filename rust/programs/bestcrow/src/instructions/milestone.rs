@@ -45,7 +45,9 @@ pub fn submit_evidence(ctx: Context<SubmitEvidence>, evidence_hash: [u8; 32]) ->
         campaign.meta_dao,
     )?;
     require!(
-        matches!(proposal.state, ProposalState::Draft { .. }) && proposal.timestamp_enqueued == 0,
+        !proposal.is_team_sponsored
+            && matches!(proposal.state, ProposalState::Draft { .. })
+            && proposal.timestamp_enqueued == 0,
         BestcrowError::InvalidProposalState
     );
     let timeout = campaign.market_timeout_secs;
@@ -118,6 +120,17 @@ pub fn resolve_milestone(ctx: Context<ResolveMilestone>) -> Result<()> {
         campaign.creator,
         campaign.meta_dao,
     )?;
+    if proposal.is_team_sponsored {
+        campaign.current_mut()?.status = MilestoneStatus::Rejected;
+        campaign.freeze_refunds(CampaignStatus::Terminated);
+        emit!(MilestoneResolved {
+            campaign: campaign.key(),
+            milestone_index: index,
+            approved: false,
+            terminated: true,
+        });
+        return Ok(());
+    }
     require!(
         proposal.timestamp_enqueued >= milestone.submitted_at
             && proposal.timestamp_enqueued <= milestone.market_deadline,
@@ -190,7 +203,7 @@ pub struct ExpireMilestone<'info> {
         bump = campaign.bump
     )]
     pub campaign: Account<'info, Campaign>,
-    /// CHECK: A finalized MetaDAO result cannot be bypassed by a timeout.
+    /// CHECK: A timely finalized MetaDAO result cannot be bypassed by a timeout.
     #[account(owner = meta_dao::ID)]
     pub proposal: UncheckedAccount<'info>,
 }
@@ -210,19 +223,25 @@ pub fn expire_milestone(ctx: Context<ExpireMilestone>) -> Result<()> {
         campaign.creator,
         campaign.meta_dao,
     )?;
-    let expired = match milestone.status {
-        MilestoneStatus::Pending => now > milestone.due_at,
-        MilestoneStatus::Reviewing => {
-            require!(
-                !matches!(
-                    proposal.state,
-                    ProposalState::Passed | ProposalState::Failed
-                ),
-                BestcrowError::InvalidProposalState
-            );
-            now > milestone.market_deadline
+    let expired = if proposal.is_team_sponsored {
+        true
+    } else {
+        match milestone.status {
+            MilestoneStatus::Pending => now > milestone.due_at,
+            MilestoneStatus::Reviewing => {
+                let valid_market_start = proposal.timestamp_enqueued >= milestone.submitted_at
+                    && proposal.timestamp_enqueued <= milestone.market_deadline;
+                require!(
+                    !matches!(
+                        proposal.state,
+                        ProposalState::Passed | ProposalState::Failed
+                    ) || !valid_market_start,
+                    BestcrowError::InvalidProposalState
+                );
+                now > milestone.market_deadline
+            }
+            _ => return err!(BestcrowError::InvalidMilestoneState),
         }
-        _ => return err!(BestcrowError::InvalidMilestoneState),
     };
     require!(expired, BestcrowError::DeadlineOpen);
     campaign.current_mut()?.status = MilestoneStatus::Rejected;

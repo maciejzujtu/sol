@@ -1,0 +1,26 @@
+services:
+  anchor:
+    image: quay.io/ottersec/anchor:v1.1.2@sha256:4ef4cf067fb1332ddd2b997a48ed05257854f51067ade342d63ebdc1039fe72e
+    platform: linux/amd64
+    working_dir: /workspace/rust
+    environment:
+      NO_DNA: "1"
+    volumes:
+      - ./rust:/workspace/rust
+      - ./scripts:/workspace/scripts:ro
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    profiles: [tools]
+    command: ["anchor", "--version"]
+
+  validator:
+    image: surfpool/surfpool:1.5.0@sha256:4f7b64daa96ab42d8a0d46cd0de556b1c90386f56fd66cfdefcb5f7039fdec9f
+    command: ["start", "--no-tui", "--no-studio", "--offline", "--no-deploy", "--host", "0.0.0.0"]
+    ports:
+      - "127.0.0.1:8899:8899"
+      - "127.0.0.1:8900:8900"
+    profiles: [localnet]
+
+volumes:
+  cargo-registry:
+  cargo-git:

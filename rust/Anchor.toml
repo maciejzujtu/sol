@@ -1,0 +1,16 @@
+[toolchain]
+package_manager = "npm"
+
+[features]
+resolution = true
+skip-lint = false
+
+[programs.localnet]
+bestcrow = "EousWVK2cePYb9zvv1oWSca4VNdRQqYef8CsxQ6BL57R"
+
+[programs.devnet]
+bestcrow = "EousWVK2cePYb9zvv1oWSca4VNdRQqYef8CsxQ6BL57R"
+
+[provider]
+cluster = "Localnet"
+wallet = "~/.config/solana/id.json"

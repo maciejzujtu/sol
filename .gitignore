@@ -1,0 +1,9 @@
+.DS_Store
+.env
+rust/target/
+rust/.anchor/
+rust/.ledger/
+rust/**/target/
+rust/clients/.codama/
+**/*keypair.json
+**/node_modules/

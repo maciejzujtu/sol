@@ -1,5 +1,8 @@
 .DS_Store
 .env
+**/.env*
+!**/.env.example
+backend/secrets/
 rust/target/
 rust/.anchor/
 rust/.ledger/

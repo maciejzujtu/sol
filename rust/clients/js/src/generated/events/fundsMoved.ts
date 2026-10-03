@@ -44,6 +44,7 @@ export type FundsMovedEvent = {
   recipient: Address;
   amount: bigint;
   refund: boolean;
+  mint: Address;
 };
 
 export type FundsMovedEventArgs = {
@@ -51,6 +52,7 @@ export type FundsMovedEventArgs = {
   recipient: Address;
   amount: number | bigint;
   refund: boolean;
+  mint: Address;
 };
 
 /** Gets the encoder for {@link FundsMovedEventArgs} event data. */
@@ -61,6 +63,7 @@ export function getFundsMovedEventEncoder(): FixedSizeEncoder<FundsMovedEventArg
       ["recipient", getAddressEncoder()],
       ["amount", getU64Encoder()],
       ["refund", getBooleanEncoder()],
+      ["mint", getAddressEncoder()],
     ]),
     [getConstantEncoder(FUNDS_MOVED_EVENT_DISCRIMINATOR)],
   );
@@ -74,6 +77,7 @@ export function getFundsMovedEventDecoder(): FixedSizeDecoder<FundsMovedEvent> {
       ["recipient", getAddressDecoder()],
       ["amount", getU64Decoder()],
       ["refund", getBooleanDecoder()],
+      ["mint", getAddressDecoder()],
     ]),
     [getConstantDecoder(FUNDS_MOVED_EVENT_DISCRIMINATOR)],
   );

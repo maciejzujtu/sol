@@ -10,8 +10,10 @@ import {
   combineCodec,
   fixDecoderSize,
   fixEncoderSize,
+  getAddressEncoder,
   getBytesDecoder,
   getBytesEncoder,
+  getProgramDerivedAddress,
   getStructDecoder,
   getStructEncoder,
   SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
@@ -26,12 +28,14 @@ import {
   type Instruction,
   type InstructionWithAccounts,
   type InstructionWithData,
+  type ReadonlyAccount,
   type ReadonlySignerAccount,
   type ReadonlyUint8Array,
   type WritableAccount,
 } from "@solana/kit";
 import {
   getAccountMetaFactory,
+  getAddressFromResolvedInstructionAccount,
   type InstructionAccountInput,
   type InstructionAccountInputAddress,
   type InstructionSignerInput,
@@ -53,6 +57,11 @@ export type SweepDustInstruction<
   TAccountCaller extends string | AccountMeta<string> = string,
   TAccountCampaign extends string | AccountMeta<string> = string,
   TAccountCreator extends string | AccountMeta<string> = string,
+  TAccountQuoteMint extends string | AccountMeta<string> = string,
+  TAccountVault extends string | AccountMeta<string> = string,
+  TAccountCreatorToken extends string | AccountMeta<string> = string,
+  TAccountTokenProgram extends string | AccountMeta<string> =
+    "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
@@ -66,8 +75,20 @@ export type SweepDustInstruction<
         ? WritableAccount<TAccountCampaign>
         : TAccountCampaign,
       TAccountCreator extends string
-        ? WritableAccount<TAccountCreator>
+        ? ReadonlyAccount<TAccountCreator>
         : TAccountCreator,
+      TAccountQuoteMint extends string
+        ? ReadonlyAccount<TAccountQuoteMint>
+        : TAccountQuoteMint,
+      TAccountVault extends string
+        ? WritableAccount<TAccountVault>
+        : TAccountVault,
+      TAccountCreatorToken extends string
+        ? WritableAccount<TAccountCreatorToken>
+        : TAccountCreatorToken,
+      TAccountTokenProgram extends string
+        ? ReadonlyAccount<TAccountTokenProgram>
+        : TAccountTokenProgram,
       ...TRemainingAccounts,
     ]
   >;
@@ -99,37 +120,77 @@ export function getSweepDustInstructionDataCodec(): FixedSizeCodec<
   );
 }
 
-export type SweepDustInput<
+export type SweepDustAsyncInput<
   TAccountCaller extends InstructionSignerInput = InstructionSignerInput,
   TAccountCampaign extends InstructionAccountInput = InstructionAccountInput,
   TAccountCreator extends InstructionAccountInput = InstructionAccountInput,
+  TAccountQuoteMint extends InstructionAccountInput = InstructionAccountInput,
+  TAccountVault extends InstructionAccountInput = InstructionAccountInput,
+  TAccountCreatorToken extends InstructionAccountInput =
+    InstructionAccountInput,
+  TAccountTokenProgram extends InstructionAccountInput =
+    InstructionAccountInput,
 > = {
   caller: TAccountCaller;
   campaign: TAccountCampaign;
   creator: TAccountCreator;
+  quoteMint: TAccountQuoteMint;
+  vault?: TAccountVault;
+  creatorToken?: TAccountCreatorToken;
+  tokenProgram?: TAccountTokenProgram;
 };
 
-export function getSweepDustInstruction<
+export async function getSweepDustInstructionAsync<
   TAccountCaller extends InstructionSignerInput,
   TAccountCampaign extends InstructionAccountInput,
   TAccountCreator extends InstructionAccountInput,
+  TAccountQuoteMint extends InstructionAccountInput,
+  TAccountVault extends InstructionAccountInput,
+  TAccountCreatorToken extends InstructionAccountInput,
+  TAccountTokenProgram extends InstructionAccountInput,
   TProgramAddress extends Address = typeof BESTCROW_PROGRAM_ADDRESS,
 >(
-  input: SweepDustInput<TAccountCaller, TAccountCampaign, TAccountCreator>,
-  config?: { programAddress?: TProgramAddress },
-): SweepDustInstruction<
-  TProgramAddress,
-  ResolvedInstructionAccountMeta<
+  input: SweepDustAsyncInput<
     TAccountCaller,
-    InstructionAccountInputAddress<TAccountCaller>
-  >,
-  ResolvedInstructionAccountMeta<
     TAccountCampaign,
-    InstructionAccountInputAddress<TAccountCampaign>
-  >,
-  ResolvedInstructionAccountMeta<
     TAccountCreator,
-    InstructionAccountInputAddress<TAccountCreator>
+    TAccountQuoteMint,
+    TAccountVault,
+    TAccountCreatorToken,
+    TAccountTokenProgram
+  >,
+  config?: { programAddress?: TProgramAddress },
+): Promise<
+  SweepDustInstruction<
+    TProgramAddress,
+    ResolvedInstructionAccountMeta<
+      TAccountCaller,
+      InstructionAccountInputAddress<TAccountCaller>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountCampaign,
+      InstructionAccountInputAddress<TAccountCampaign>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountCreator,
+      InstructionAccountInputAddress<TAccountCreator>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountQuoteMint,
+      InstructionAccountInputAddress<TAccountQuoteMint>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountVault,
+      InstructionAccountInputAddress<TAccountVault>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountCreatorToken,
+      InstructionAccountInputAddress<TAccountCreatorToken>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountTokenProgram,
+      InstructionAccountInputAddress<TAccountTokenProgram>
+    >
   >
 > {
   // Program address.
@@ -149,7 +210,23 @@ export function getSweepDustInstruction<
     creator: {
       value: input.creator ?? null,
       isSigner: false,
+      isWritable: false,
+    },
+    quoteMint: {
+      value: input.quoteMint ?? null,
+      isSigner: false,
+      isWritable: false,
+    },
+    vault: { value: input.vault ?? null, isSigner: false, isWritable: true },
+    creatorToken: {
+      value: input.creatorToken ?? null,
+      isSigner: false,
       isWritable: true,
+    },
+    tokenProgram: {
+      value: input.tokenProgram ?? null,
+      isSigner: false,
+      isWritable: false,
     },
   };
   const accounts = originalAccounts as Record<
@@ -157,11 +234,62 @@ export function getSweepDustInstruction<
     ResolvedInstructionAccount
   >;
 
+  // Resolve default values.
+  if (!accounts.vault.value) {
+    accounts.vault.value = await getProgramDerivedAddress({
+      programAddress,
+      seeds: [
+        getBytesEncoder().encode(new Uint8Array([118, 97, 117, 108, 116])),
+        getAddressEncoder().encode(
+          getAddressFromResolvedInstructionAccount(
+            "campaign",
+            accounts.campaign.value,
+          ),
+        ),
+      ],
+    });
+  }
+  if (!accounts.creatorToken.value) {
+    accounts.creatorToken.value = await getProgramDerivedAddress({
+      programAddress:
+        "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL" as Address<"ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL">,
+      seeds: [
+        getAddressEncoder().encode(
+          getAddressFromResolvedInstructionAccount(
+            "creator",
+            accounts.creator.value,
+          ),
+        ),
+        getBytesEncoder().encode(
+          new Uint8Array([
+            6, 221, 246, 225, 215, 101, 161, 147, 217, 203, 225, 70, 206, 235,
+            121, 172, 28, 180, 133, 237, 95, 91, 55, 145, 58, 140, 245, 133,
+            126, 255, 0, 169,
+          ]),
+        ),
+        getAddressEncoder().encode(
+          getAddressFromResolvedInstructionAccount(
+            "quoteMint",
+            accounts.quoteMint.value,
+          ),
+        ),
+      ],
+    });
+  }
+  if (!accounts.tokenProgram.value) {
+    accounts.tokenProgram.value =
+      "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" as Address<"TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA">;
+  }
+
   return Object.freeze({
     accounts: [
       getAccountMeta("caller", accounts.caller),
       getAccountMeta("campaign", accounts.campaign),
       getAccountMeta("creator", accounts.creator),
+      getAccountMeta("quoteMint", accounts.quoteMint),
+      getAccountMeta("vault", accounts.vault),
+      getAccountMeta("creatorToken", accounts.creatorToken),
+      getAccountMeta("tokenProgram", accounts.tokenProgram),
     ],
     data: getSweepDustInstructionDataEncoder().encode({}),
     programAddress,
@@ -178,6 +306,185 @@ export function getSweepDustInstruction<
     ResolvedInstructionAccountMeta<
       TAccountCreator,
       InstructionAccountInputAddress<TAccountCreator>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountQuoteMint,
+      InstructionAccountInputAddress<TAccountQuoteMint>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountVault,
+      InstructionAccountInputAddress<TAccountVault>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountCreatorToken,
+      InstructionAccountInputAddress<TAccountCreatorToken>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountTokenProgram,
+      InstructionAccountInputAddress<TAccountTokenProgram>
+    >
+  >);
+}
+
+export type SweepDustInput<
+  TAccountCaller extends InstructionSignerInput = InstructionSignerInput,
+  TAccountCampaign extends InstructionAccountInput = InstructionAccountInput,
+  TAccountCreator extends InstructionAccountInput = InstructionAccountInput,
+  TAccountQuoteMint extends InstructionAccountInput = InstructionAccountInput,
+  TAccountVault extends InstructionAccountInput = InstructionAccountInput,
+  TAccountCreatorToken extends InstructionAccountInput =
+    InstructionAccountInput,
+  TAccountTokenProgram extends InstructionAccountInput =
+    InstructionAccountInput,
+> = {
+  caller: TAccountCaller;
+  campaign: TAccountCampaign;
+  creator: TAccountCreator;
+  quoteMint: TAccountQuoteMint;
+  vault: TAccountVault;
+  creatorToken: TAccountCreatorToken;
+  tokenProgram?: TAccountTokenProgram;
+};
+
+export function getSweepDustInstruction<
+  TAccountCaller extends InstructionSignerInput,
+  TAccountCampaign extends InstructionAccountInput,
+  TAccountCreator extends InstructionAccountInput,
+  TAccountQuoteMint extends InstructionAccountInput,
+  TAccountVault extends InstructionAccountInput,
+  TAccountCreatorToken extends InstructionAccountInput,
+  TAccountTokenProgram extends InstructionAccountInput,
+  TProgramAddress extends Address = typeof BESTCROW_PROGRAM_ADDRESS,
+>(
+  input: SweepDustInput<
+    TAccountCaller,
+    TAccountCampaign,
+    TAccountCreator,
+    TAccountQuoteMint,
+    TAccountVault,
+    TAccountCreatorToken,
+    TAccountTokenProgram
+  >,
+  config?: { programAddress?: TProgramAddress },
+): SweepDustInstruction<
+  TProgramAddress,
+  ResolvedInstructionAccountMeta<
+    TAccountCaller,
+    InstructionAccountInputAddress<TAccountCaller>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountCampaign,
+    InstructionAccountInputAddress<TAccountCampaign>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountCreator,
+    InstructionAccountInputAddress<TAccountCreator>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountQuoteMint,
+    InstructionAccountInputAddress<TAccountQuoteMint>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountVault,
+    InstructionAccountInputAddress<TAccountVault>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountCreatorToken,
+    InstructionAccountInputAddress<TAccountCreatorToken>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountTokenProgram,
+    InstructionAccountInputAddress<TAccountTokenProgram>
+  >
+> {
+  // Program address.
+  const programAddress = config?.programAddress ?? BESTCROW_PROGRAM_ADDRESS;
+
+  // Account meta helper.
+  const getAccountMeta = getAccountMetaFactory(programAddress, "programId");
+
+  // Original accounts.
+  const originalAccounts = {
+    caller: { value: input.caller ?? null, isSigner: true, isWritable: false },
+    campaign: {
+      value: input.campaign ?? null,
+      isSigner: false,
+      isWritable: true,
+    },
+    creator: {
+      value: input.creator ?? null,
+      isSigner: false,
+      isWritable: false,
+    },
+    quoteMint: {
+      value: input.quoteMint ?? null,
+      isSigner: false,
+      isWritable: false,
+    },
+    vault: { value: input.vault ?? null, isSigner: false, isWritable: true },
+    creatorToken: {
+      value: input.creatorToken ?? null,
+      isSigner: false,
+      isWritable: true,
+    },
+    tokenProgram: {
+      value: input.tokenProgram ?? null,
+      isSigner: false,
+      isWritable: false,
+    },
+  };
+  const accounts = originalAccounts as Record<
+    keyof typeof originalAccounts,
+    ResolvedInstructionAccount
+  >;
+
+  // Resolve default values.
+  if (!accounts.tokenProgram.value) {
+    accounts.tokenProgram.value =
+      "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" as Address<"TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA">;
+  }
+
+  return Object.freeze({
+    accounts: [
+      getAccountMeta("caller", accounts.caller),
+      getAccountMeta("campaign", accounts.campaign),
+      getAccountMeta("creator", accounts.creator),
+      getAccountMeta("quoteMint", accounts.quoteMint),
+      getAccountMeta("vault", accounts.vault),
+      getAccountMeta("creatorToken", accounts.creatorToken),
+      getAccountMeta("tokenProgram", accounts.tokenProgram),
+    ],
+    data: getSweepDustInstructionDataEncoder().encode({}),
+    programAddress,
+  } as SweepDustInstruction<
+    TProgramAddress,
+    ResolvedInstructionAccountMeta<
+      TAccountCaller,
+      InstructionAccountInputAddress<TAccountCaller>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountCampaign,
+      InstructionAccountInputAddress<TAccountCampaign>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountCreator,
+      InstructionAccountInputAddress<TAccountCreator>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountQuoteMint,
+      InstructionAccountInputAddress<TAccountQuoteMint>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountVault,
+      InstructionAccountInputAddress<TAccountVault>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountCreatorToken,
+      InstructionAccountInputAddress<TAccountCreatorToken>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountTokenProgram,
+      InstructionAccountInputAddress<TAccountTokenProgram>
     >
   >);
 }
@@ -191,6 +498,10 @@ export type ParsedSweepDustInstruction<
     caller: TAccountMetas[0];
     campaign: TAccountMetas[1];
     creator: TAccountMetas[2];
+    quoteMint: TAccountMetas[3];
+    vault: TAccountMetas[4];
+    creatorToken: TAccountMetas[5];
+    tokenProgram: TAccountMetas[6];
   };
   data: SweepDustInstructionData;
 };
@@ -203,12 +514,12 @@ export function parseSweepDustInstruction<
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>,
 ): ParsedSweepDustInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 3) {
+  if (instruction.accounts.length < 7) {
     throw new SolanaError(
       SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
       {
         actualAccountMetas: instruction.accounts.length,
-        expectedAccountMetas: 3,
+        expectedAccountMetas: 7,
       },
     );
   }
@@ -224,6 +535,10 @@ export function parseSweepDustInstruction<
       caller: getNextAccount(),
       campaign: getNextAccount(),
       creator: getNextAccount(),
+      quoteMint: getNextAccount(),
+      vault: getNextAccount(),
+      creatorToken: getNextAccount(),
+      tokenProgram: getNextAccount(),
     },
     data: getSweepDustInstructionDataDecoder().decode(instruction.data),
   };

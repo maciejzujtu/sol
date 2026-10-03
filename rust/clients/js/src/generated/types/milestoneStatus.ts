@@ -17,11 +17,9 @@ import {
 
 export enum MilestoneStatus {
   Pending,
-  Voting,
-  Revision,
-  ShowCause,
-  Approved,
-  Released,
+  Reviewing,
+  Passed,
+  Rejected,
 }
 
 export type MilestoneStatusArgs = MilestoneStatus;

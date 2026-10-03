@@ -30,6 +30,7 @@ import {
   type Instruction,
   type InstructionWithAccounts,
   type InstructionWithData,
+  type ReadonlyAccount,
   type ReadonlyUint8Array,
   type WritableAccount,
   type WritableSignerAccount,
@@ -60,6 +61,11 @@ export type WithdrawPledgeInstruction<
   TAccountWallet extends string | AccountMeta<string> = string,
   TAccountCampaign extends string | AccountMeta<string> = string,
   TAccountBacker extends string | AccountMeta<string> = string,
+  TAccountQuoteMint extends string | AccountMeta<string> = string,
+  TAccountVault extends string | AccountMeta<string> = string,
+  TAccountWalletToken extends string | AccountMeta<string> = string,
+  TAccountTokenProgram extends string | AccountMeta<string> =
+    "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
@@ -75,6 +81,18 @@ export type WithdrawPledgeInstruction<
       TAccountBacker extends string
         ? WritableAccount<TAccountBacker>
         : TAccountBacker,
+      TAccountQuoteMint extends string
+        ? ReadonlyAccount<TAccountQuoteMint>
+        : TAccountQuoteMint,
+      TAccountVault extends string
+        ? WritableAccount<TAccountVault>
+        : TAccountVault,
+      TAccountWalletToken extends string
+        ? WritableAccount<TAccountWalletToken>
+        : TAccountWalletToken,
+      TAccountTokenProgram extends string
+        ? ReadonlyAccount<TAccountTokenProgram>
+        : TAccountTokenProgram,
       ...TRemainingAccounts,
     ]
   >;
@@ -117,10 +135,19 @@ export type WithdrawPledgeAsyncInput<
   TAccountWallet extends InstructionSignerInput = InstructionSignerInput,
   TAccountCampaign extends InstructionAccountInput = InstructionAccountInput,
   TAccountBacker extends InstructionAccountInput = InstructionAccountInput,
+  TAccountQuoteMint extends InstructionAccountInput = InstructionAccountInput,
+  TAccountVault extends InstructionAccountInput = InstructionAccountInput,
+  TAccountWalletToken extends InstructionAccountInput = InstructionAccountInput,
+  TAccountTokenProgram extends InstructionAccountInput =
+    InstructionAccountInput,
 > = {
   wallet: TAccountWallet;
   campaign: TAccountCampaign;
   backer?: TAccountBacker;
+  quoteMint: TAccountQuoteMint;
+  vault?: TAccountVault;
+  walletToken?: TAccountWalletToken;
+  tokenProgram?: TAccountTokenProgram;
   amount: WithdrawPledgeInstructionDataArgs["amount"];
 };
 
@@ -128,12 +155,20 @@ export async function getWithdrawPledgeInstructionAsync<
   TAccountWallet extends InstructionSignerInput,
   TAccountCampaign extends InstructionAccountInput,
   TAccountBacker extends InstructionAccountInput,
+  TAccountQuoteMint extends InstructionAccountInput,
+  TAccountVault extends InstructionAccountInput,
+  TAccountWalletToken extends InstructionAccountInput,
+  TAccountTokenProgram extends InstructionAccountInput,
   TProgramAddress extends Address = typeof BESTCROW_PROGRAM_ADDRESS,
 >(
   input: WithdrawPledgeAsyncInput<
     TAccountWallet,
     TAccountCampaign,
-    TAccountBacker
+    TAccountBacker,
+    TAccountQuoteMint,
+    TAccountVault,
+    TAccountWalletToken,
+    TAccountTokenProgram
   >,
   config?: { programAddress?: TProgramAddress },
 ): Promise<
@@ -150,6 +185,22 @@ export async function getWithdrawPledgeInstructionAsync<
     ResolvedInstructionAccountMeta<
       TAccountBacker,
       InstructionAccountInputAddress<TAccountBacker>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountQuoteMint,
+      InstructionAccountInputAddress<TAccountQuoteMint>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountVault,
+      InstructionAccountInputAddress<TAccountVault>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountWalletToken,
+      InstructionAccountInputAddress<TAccountWalletToken>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountTokenProgram,
+      InstructionAccountInputAddress<TAccountTokenProgram>
     >
   >
 > {
@@ -168,6 +219,22 @@ export async function getWithdrawPledgeInstructionAsync<
       isWritable: true,
     },
     backer: { value: input.backer ?? null, isSigner: false, isWritable: true },
+    quoteMint: {
+      value: input.quoteMint ?? null,
+      isSigner: false,
+      isWritable: false,
+    },
+    vault: { value: input.vault ?? null, isSigner: false, isWritable: true },
+    walletToken: {
+      value: input.walletToken ?? null,
+      isSigner: false,
+      isWritable: true,
+    },
+    tokenProgram: {
+      value: input.tokenProgram ?? null,
+      isSigner: false,
+      isWritable: false,
+    },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -198,12 +265,61 @@ export async function getWithdrawPledgeInstructionAsync<
       ],
     });
   }
+  if (!accounts.vault.value) {
+    accounts.vault.value = await getProgramDerivedAddress({
+      programAddress,
+      seeds: [
+        getBytesEncoder().encode(new Uint8Array([118, 97, 117, 108, 116])),
+        getAddressEncoder().encode(
+          getAddressFromResolvedInstructionAccount(
+            "campaign",
+            accounts.campaign.value,
+          ),
+        ),
+      ],
+    });
+  }
+  if (!accounts.walletToken.value) {
+    accounts.walletToken.value = await getProgramDerivedAddress({
+      programAddress:
+        "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL" as Address<"ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL">,
+      seeds: [
+        getAddressEncoder().encode(
+          getAddressFromResolvedInstructionAccount(
+            "wallet",
+            accounts.wallet.value,
+          ),
+        ),
+        getBytesEncoder().encode(
+          new Uint8Array([
+            6, 221, 246, 225, 215, 101, 161, 147, 217, 203, 225, 70, 206, 235,
+            121, 172, 28, 180, 133, 237, 95, 91, 55, 145, 58, 140, 245, 133,
+            126, 255, 0, 169,
+          ]),
+        ),
+        getAddressEncoder().encode(
+          getAddressFromResolvedInstructionAccount(
+            "quoteMint",
+            accounts.quoteMint.value,
+          ),
+        ),
+      ],
+    });
+  }
+  if (!accounts.tokenProgram.value) {
+    accounts.tokenProgram.value =
+      "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" as Address<"TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA">;
+  }
 
   return Object.freeze({
     accounts: [
       getAccountMeta("wallet", accounts.wallet),
       getAccountMeta("campaign", accounts.campaign),
       getAccountMeta("backer", accounts.backer),
+      getAccountMeta("quoteMint", accounts.quoteMint),
+      getAccountMeta("vault", accounts.vault),
+      getAccountMeta("walletToken", accounts.walletToken),
+      getAccountMeta("tokenProgram", accounts.tokenProgram),
     ],
     data: getWithdrawPledgeInstructionDataEncoder().encode(
       args as WithdrawPledgeInstructionDataArgs,
@@ -222,6 +338,22 @@ export async function getWithdrawPledgeInstructionAsync<
     ResolvedInstructionAccountMeta<
       TAccountBacker,
       InstructionAccountInputAddress<TAccountBacker>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountQuoteMint,
+      InstructionAccountInputAddress<TAccountQuoteMint>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountVault,
+      InstructionAccountInputAddress<TAccountVault>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountWalletToken,
+      InstructionAccountInputAddress<TAccountWalletToken>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountTokenProgram,
+      InstructionAccountInputAddress<TAccountTokenProgram>
     >
   >);
 }
@@ -230,10 +362,19 @@ export type WithdrawPledgeInput<
   TAccountWallet extends InstructionSignerInput = InstructionSignerInput,
   TAccountCampaign extends InstructionAccountInput = InstructionAccountInput,
   TAccountBacker extends InstructionAccountInput = InstructionAccountInput,
+  TAccountQuoteMint extends InstructionAccountInput = InstructionAccountInput,
+  TAccountVault extends InstructionAccountInput = InstructionAccountInput,
+  TAccountWalletToken extends InstructionAccountInput = InstructionAccountInput,
+  TAccountTokenProgram extends InstructionAccountInput =
+    InstructionAccountInput,
 > = {
   wallet: TAccountWallet;
   campaign: TAccountCampaign;
   backer: TAccountBacker;
+  quoteMint: TAccountQuoteMint;
+  vault: TAccountVault;
+  walletToken: TAccountWalletToken;
+  tokenProgram?: TAccountTokenProgram;
   amount: WithdrawPledgeInstructionDataArgs["amount"];
 };
 
@@ -241,9 +382,21 @@ export function getWithdrawPledgeInstruction<
   TAccountWallet extends InstructionSignerInput,
   TAccountCampaign extends InstructionAccountInput,
   TAccountBacker extends InstructionAccountInput,
+  TAccountQuoteMint extends InstructionAccountInput,
+  TAccountVault extends InstructionAccountInput,
+  TAccountWalletToken extends InstructionAccountInput,
+  TAccountTokenProgram extends InstructionAccountInput,
   TProgramAddress extends Address = typeof BESTCROW_PROGRAM_ADDRESS,
 >(
-  input: WithdrawPledgeInput<TAccountWallet, TAccountCampaign, TAccountBacker>,
+  input: WithdrawPledgeInput<
+    TAccountWallet,
+    TAccountCampaign,
+    TAccountBacker,
+    TAccountQuoteMint,
+    TAccountVault,
+    TAccountWalletToken,
+    TAccountTokenProgram
+  >,
   config?: { programAddress?: TProgramAddress },
 ): WithdrawPledgeInstruction<
   TProgramAddress,
@@ -258,6 +411,22 @@ export function getWithdrawPledgeInstruction<
   ResolvedInstructionAccountMeta<
     TAccountBacker,
     InstructionAccountInputAddress<TAccountBacker>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountQuoteMint,
+    InstructionAccountInputAddress<TAccountQuoteMint>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountVault,
+    InstructionAccountInputAddress<TAccountVault>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountWalletToken,
+    InstructionAccountInputAddress<TAccountWalletToken>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountTokenProgram,
+    InstructionAccountInputAddress<TAccountTokenProgram>
   >
 > {
   // Program address.
@@ -275,6 +444,22 @@ export function getWithdrawPledgeInstruction<
       isWritable: true,
     },
     backer: { value: input.backer ?? null, isSigner: false, isWritable: true },
+    quoteMint: {
+      value: input.quoteMint ?? null,
+      isSigner: false,
+      isWritable: false,
+    },
+    vault: { value: input.vault ?? null, isSigner: false, isWritable: true },
+    walletToken: {
+      value: input.walletToken ?? null,
+      isSigner: false,
+      isWritable: true,
+    },
+    tokenProgram: {
+      value: input.tokenProgram ?? null,
+      isSigner: false,
+      isWritable: false,
+    },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -284,11 +469,21 @@ export function getWithdrawPledgeInstruction<
   // Original args.
   const args = { ...input };
 
+  // Resolve default values.
+  if (!accounts.tokenProgram.value) {
+    accounts.tokenProgram.value =
+      "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" as Address<"TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA">;
+  }
+
   return Object.freeze({
     accounts: [
       getAccountMeta("wallet", accounts.wallet),
       getAccountMeta("campaign", accounts.campaign),
       getAccountMeta("backer", accounts.backer),
+      getAccountMeta("quoteMint", accounts.quoteMint),
+      getAccountMeta("vault", accounts.vault),
+      getAccountMeta("walletToken", accounts.walletToken),
+      getAccountMeta("tokenProgram", accounts.tokenProgram),
     ],
     data: getWithdrawPledgeInstructionDataEncoder().encode(
       args as WithdrawPledgeInstructionDataArgs,
@@ -307,6 +502,22 @@ export function getWithdrawPledgeInstruction<
     ResolvedInstructionAccountMeta<
       TAccountBacker,
       InstructionAccountInputAddress<TAccountBacker>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountQuoteMint,
+      InstructionAccountInputAddress<TAccountQuoteMint>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountVault,
+      InstructionAccountInputAddress<TAccountVault>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountWalletToken,
+      InstructionAccountInputAddress<TAccountWalletToken>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountTokenProgram,
+      InstructionAccountInputAddress<TAccountTokenProgram>
     >
   >);
 }
@@ -320,6 +531,10 @@ export type ParsedWithdrawPledgeInstruction<
     wallet: TAccountMetas[0];
     campaign: TAccountMetas[1];
     backer: TAccountMetas[2];
+    quoteMint: TAccountMetas[3];
+    vault: TAccountMetas[4];
+    walletToken: TAccountMetas[5];
+    tokenProgram: TAccountMetas[6];
   };
   data: WithdrawPledgeInstructionData;
 };
@@ -332,12 +547,12 @@ export function parseWithdrawPledgeInstruction<
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>,
 ): ParsedWithdrawPledgeInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 3) {
+  if (instruction.accounts.length < 7) {
     throw new SolanaError(
       SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
       {
         actualAccountMetas: instruction.accounts.length,
-        expectedAccountMetas: 3,
+        expectedAccountMetas: 7,
       },
     );
   }
@@ -353,6 +568,10 @@ export function parseWithdrawPledgeInstruction<
       wallet: getNextAccount(),
       campaign: getNextAccount(),
       backer: getNextAccount(),
+      quoteMint: getNextAccount(),
+      vault: getNextAccount(),
+      walletToken: getNextAccount(),
+      tokenProgram: getNextAccount(),
     },
     data: getWithdrawPledgeInstructionDataDecoder().decode(instruction.data),
   };

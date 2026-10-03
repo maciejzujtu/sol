@@ -36,80 +36,68 @@ import {
 import {
   getBackerCodec,
   getCampaignCodec,
-  getVoteReceiptCodec,
+  getDaoBindingCodec,
   type Backer,
   type BackerArgs,
   type Campaign,
   type CampaignArgs,
-  type VoteReceipt,
-  type VoteReceiptArgs,
+  type DaoBinding,
+  type DaoBindingArgs,
 } from "../accounts";
 import {
   getCancelCampaignInstruction,
-  getCastVoteInstructionAsync,
   getClaimRefundInstructionAsync,
   getCloseBackerInstructionAsync,
-  getCloseVoteReceiptInstruction,
-  getCreateCampaignInstruction,
+  getCreateCampaignInstructionAsync,
   getExpireMilestoneInstruction,
   getFinalizeFundingInstruction,
-  getFinalizeVoteInstruction,
   getPledgeInstructionAsync,
-  getReleaseMilestoneInstruction,
+  getResolveMilestoneInstructionAsync,
   getSubmitEvidenceInstruction,
-  getSweepDustInstruction,
+  getSweepDustInstructionAsync,
   getWithdrawPledgeInstructionAsync,
   parseCancelCampaignInstruction,
-  parseCastVoteInstruction,
   parseClaimRefundInstruction,
   parseCloseBackerInstruction,
-  parseCloseVoteReceiptInstruction,
   parseCreateCampaignInstruction,
   parseExpireMilestoneInstruction,
   parseFinalizeFundingInstruction,
-  parseFinalizeVoteInstruction,
   parsePledgeInstruction,
-  parseReleaseMilestoneInstruction,
+  parseResolveMilestoneInstruction,
   parseSubmitEvidenceInstruction,
   parseSweepDustInstruction,
   parseWithdrawPledgeInstruction,
   type CancelCampaignInput,
-  type CastVoteAsyncInput,
   type ClaimRefundAsyncInput,
   type CloseBackerAsyncInput,
-  type CloseVoteReceiptInput,
-  type CreateCampaignInput,
+  type CreateCampaignAsyncInput,
   type ExpireMilestoneInput,
   type FinalizeFundingInput,
-  type FinalizeVoteInput,
   type ParsedCancelCampaignInstruction,
-  type ParsedCastVoteInstruction,
   type ParsedClaimRefundInstruction,
   type ParsedCloseBackerInstruction,
-  type ParsedCloseVoteReceiptInstruction,
   type ParsedCreateCampaignInstruction,
   type ParsedExpireMilestoneInstruction,
   type ParsedFinalizeFundingInstruction,
-  type ParsedFinalizeVoteInstruction,
   type ParsedPledgeInstruction,
-  type ParsedReleaseMilestoneInstruction,
+  type ParsedResolveMilestoneInstruction,
   type ParsedSubmitEvidenceInstruction,
   type ParsedSweepDustInstruction,
   type ParsedWithdrawPledgeInstruction,
   type PledgeAsyncInput,
-  type ReleaseMilestoneInput,
+  type ResolveMilestoneAsyncInput,
   type SubmitEvidenceInput,
-  type SweepDustInput,
+  type SweepDustAsyncInput,
   type WithdrawPledgeAsyncInput,
 } from "../instructions";
 
 export const BESTCROW_PROGRAM_ADDRESS =
-  "EousWVK2cePYb9zvv1oWSca4VNdRQqYef8CsxQ6BL57R" as Address<"EousWVK2cePYb9zvv1oWSca4VNdRQqYef8CsxQ6BL57R">;
+  "FUTARELBfJfQ8RDGhg1wdhddq1odMAJUePHFuBYfUxKq" as Address<"FUTARELBfJfQ8RDGhg1wdhddq1odMAJUePHFuBYfUxKq">;
 
 export enum BestcrowAccount {
   Backer,
   Campaign,
-  VoteReceipt,
+  DaoBinding,
 }
 
 export function identifyBestcrowAccount(
@@ -142,12 +130,12 @@ export function identifyBestcrowAccount(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([104, 20, 204, 252, 45, 84, 37, 195]),
+        new Uint8Array([38, 212, 48, 162, 139, 142, 38, 197]),
       ),
       0,
     )
   ) {
-    return BestcrowAccount.VoteReceipt;
+    return BestcrowAccount.DaoBinding;
   }
   throw new SolanaError(
     SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_ACCOUNT,
@@ -162,7 +150,6 @@ export enum BestcrowEvent {
   EvidenceSubmitted,
   FundsMoved,
   MilestoneResolved,
-  VoteRecorded,
 }
 
 export function identifyBestcrowEvent(
@@ -235,17 +222,6 @@ export function identifyBestcrowEvent(
   ) {
     return BestcrowEvent.MilestoneResolved;
   }
-  if (
-    containsBytes(
-      data,
-      fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([72, 160, 49, 123, 215, 219, 68, 221]),
-      ),
-      0,
-    )
-  ) {
-    return BestcrowEvent.VoteRecorded;
-  }
   throw new Error(
     "The provided event could not be identified as a bestcrow event.",
   );
@@ -253,16 +229,13 @@ export function identifyBestcrowEvent(
 
 export enum BestcrowInstruction {
   CancelCampaign,
-  CastVote,
   ClaimRefund,
   CloseBacker,
-  CloseVoteReceipt,
   CreateCampaign,
   ExpireMilestone,
   FinalizeFunding,
-  FinalizeVote,
   Pledge,
-  ReleaseMilestone,
+  ResolveMilestone,
   SubmitEvidence,
   SweepDust,
   WithdrawPledge,
@@ -287,17 +260,6 @@ export function identifyBestcrowInstruction(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([20, 212, 15, 189, 69, 180, 69, 151]),
-      ),
-      0,
-    )
-  ) {
-    return BestcrowInstruction.CastVote;
-  }
-  if (
-    containsBytes(
-      data,
-      fixEncoderSize(getBytesEncoder(), 8).encode(
         new Uint8Array([15, 16, 30, 161, 255, 228, 97, 60]),
       ),
       0,
@@ -315,17 +277,6 @@ export function identifyBestcrowInstruction(
     )
   ) {
     return BestcrowInstruction.CloseBacker;
-  }
-  if (
-    containsBytes(
-      data,
-      fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([245, 52, 25, 255, 206, 109, 60, 162]),
-      ),
-      0,
-    )
-  ) {
-    return BestcrowInstruction.CloseVoteReceipt;
   }
   if (
     containsBytes(
@@ -364,17 +315,6 @@ export function identifyBestcrowInstruction(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([181, 176, 6, 248, 249, 134, 146, 56]),
-      ),
-      0,
-    )
-  ) {
-    return BestcrowInstruction.FinalizeVote;
-  }
-  if (
-    containsBytes(
-      data,
-      fixEncoderSize(getBytesEncoder(), 8).encode(
         new Uint8Array([235, 47, 156, 254, 0, 88, 212, 142]),
       ),
       0,
@@ -386,12 +326,12 @@ export function identifyBestcrowInstruction(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([56, 2, 199, 164, 184, 108, 167, 222]),
+        new Uint8Array([183, 234, 132, 97, 208, 35, 45, 117]),
       ),
       0,
     )
   ) {
-    return BestcrowInstruction.ReleaseMilestone;
+    return BestcrowInstruction.ResolveMilestone;
   }
   if (
     containsBytes(
@@ -433,23 +373,17 @@ export function identifyBestcrowInstruction(
 }
 
 export type ParsedBestcrowInstruction<
-  TProgram extends string = "EousWVK2cePYb9zvv1oWSca4VNdRQqYef8CsxQ6BL57R",
+  TProgram extends string = "FUTARELBfJfQ8RDGhg1wdhddq1odMAJUePHFuBYfUxKq",
 > =
   | ({
       instructionType: BestcrowInstruction.CancelCampaign;
     } & ParsedCancelCampaignInstruction<TProgram>)
-  | ({
-      instructionType: BestcrowInstruction.CastVote;
-    } & ParsedCastVoteInstruction<TProgram>)
   | ({
       instructionType: BestcrowInstruction.ClaimRefund;
     } & ParsedClaimRefundInstruction<TProgram>)
   | ({
       instructionType: BestcrowInstruction.CloseBacker;
     } & ParsedCloseBackerInstruction<TProgram>)
-  | ({
-      instructionType: BestcrowInstruction.CloseVoteReceipt;
-    } & ParsedCloseVoteReceiptInstruction<TProgram>)
   | ({
       instructionType: BestcrowInstruction.CreateCampaign;
     } & ParsedCreateCampaignInstruction<TProgram>)
@@ -460,14 +394,11 @@ export type ParsedBestcrowInstruction<
       instructionType: BestcrowInstruction.FinalizeFunding;
     } & ParsedFinalizeFundingInstruction<TProgram>)
   | ({
-      instructionType: BestcrowInstruction.FinalizeVote;
-    } & ParsedFinalizeVoteInstruction<TProgram>)
-  | ({
       instructionType: BestcrowInstruction.Pledge;
     } & ParsedPledgeInstruction<TProgram>)
   | ({
-      instructionType: BestcrowInstruction.ReleaseMilestone;
-    } & ParsedReleaseMilestoneInstruction<TProgram>)
+      instructionType: BestcrowInstruction.ResolveMilestone;
+    } & ParsedResolveMilestoneInstruction<TProgram>)
   | ({
       instructionType: BestcrowInstruction.SubmitEvidence;
     } & ParsedSubmitEvidenceInstruction<TProgram>)
@@ -490,13 +421,6 @@ export function parseBestcrowInstruction<TProgram extends string>(
         ...parseCancelCampaignInstruction(instruction),
       };
     }
-    case BestcrowInstruction.CastVote: {
-      assertIsInstructionWithAccounts(instruction);
-      return {
-        instructionType: BestcrowInstruction.CastVote,
-        ...parseCastVoteInstruction(instruction),
-      };
-    }
     case BestcrowInstruction.ClaimRefund: {
       assertIsInstructionWithAccounts(instruction);
       return {
@@ -509,13 +433,6 @@ export function parseBestcrowInstruction<TProgram extends string>(
       return {
         instructionType: BestcrowInstruction.CloseBacker,
         ...parseCloseBackerInstruction(instruction),
-      };
-    }
-    case BestcrowInstruction.CloseVoteReceipt: {
-      assertIsInstructionWithAccounts(instruction);
-      return {
-        instructionType: BestcrowInstruction.CloseVoteReceipt,
-        ...parseCloseVoteReceiptInstruction(instruction),
       };
     }
     case BestcrowInstruction.CreateCampaign: {
@@ -539,13 +456,6 @@ export function parseBestcrowInstruction<TProgram extends string>(
         ...parseFinalizeFundingInstruction(instruction),
       };
     }
-    case BestcrowInstruction.FinalizeVote: {
-      assertIsInstructionWithAccounts(instruction);
-      return {
-        instructionType: BestcrowInstruction.FinalizeVote,
-        ...parseFinalizeVoteInstruction(instruction),
-      };
-    }
     case BestcrowInstruction.Pledge: {
       assertIsInstructionWithAccounts(instruction);
       return {
@@ -553,11 +463,11 @@ export function parseBestcrowInstruction<TProgram extends string>(
         ...parsePledgeInstruction(instruction),
       };
     }
-    case BestcrowInstruction.ReleaseMilestone: {
+    case BestcrowInstruction.ResolveMilestone: {
       assertIsInstructionWithAccounts(instruction);
       return {
-        instructionType: BestcrowInstruction.ReleaseMilestone,
-        ...parseReleaseMilestoneInstruction(instruction),
+        instructionType: BestcrowInstruction.ResolveMilestone,
+        ...parseResolveMilestoneInstruction(instruction),
       };
     }
     case BestcrowInstruction.SubmitEvidence: {
@@ -602,18 +512,14 @@ export type BestcrowPluginAccounts = {
     SelfFetchFunctions<BackerArgs, Backer>;
   campaign: ReturnType<typeof getCampaignCodec> &
     SelfFetchFunctions<CampaignArgs, Campaign>;
-  voteReceipt: ReturnType<typeof getVoteReceiptCodec> &
-    SelfFetchFunctions<VoteReceiptArgs, VoteReceipt>;
+  daoBinding: ReturnType<typeof getDaoBindingCodec> &
+    SelfFetchFunctions<DaoBindingArgs, DaoBinding>;
 };
 
 export type BestcrowPluginInstructions = {
   cancelCampaign: (
     input: CancelCampaignInput,
   ) => ReturnType<typeof getCancelCampaignInstruction> &
-    SelfPlanAndSendFunctions;
-  castVote: (
-    input: CastVoteAsyncInput,
-  ) => ReturnType<typeof getCastVoteInstructionAsync> &
     SelfPlanAndSendFunctions;
   claimRefund: (
     input: ClaimRefundAsyncInput,
@@ -623,13 +529,9 @@ export type BestcrowPluginInstructions = {
     input: CloseBackerAsyncInput,
   ) => ReturnType<typeof getCloseBackerInstructionAsync> &
     SelfPlanAndSendFunctions;
-  closeVoteReceipt: (
-    input: CloseVoteReceiptInput,
-  ) => ReturnType<typeof getCloseVoteReceiptInstruction> &
-    SelfPlanAndSendFunctions;
   createCampaign: (
-    input: CreateCampaignInput,
-  ) => ReturnType<typeof getCreateCampaignInstruction> &
+    input: CreateCampaignAsyncInput,
+  ) => ReturnType<typeof getCreateCampaignInstructionAsync> &
     SelfPlanAndSendFunctions;
   expireMilestone: (
     input: ExpireMilestoneInput,
@@ -639,23 +541,21 @@ export type BestcrowPluginInstructions = {
     input: FinalizeFundingInput,
   ) => ReturnType<typeof getFinalizeFundingInstruction> &
     SelfPlanAndSendFunctions;
-  finalizeVote: (
-    input: FinalizeVoteInput,
-  ) => ReturnType<typeof getFinalizeVoteInstruction> & SelfPlanAndSendFunctions;
   pledge: (
     input: PledgeAsyncInput,
   ) => ReturnType<typeof getPledgeInstructionAsync> & SelfPlanAndSendFunctions;
-  releaseMilestone: (
-    input: ReleaseMilestoneInput,
-  ) => ReturnType<typeof getReleaseMilestoneInstruction> &
+  resolveMilestone: (
+    input: ResolveMilestoneAsyncInput,
+  ) => ReturnType<typeof getResolveMilestoneInstructionAsync> &
     SelfPlanAndSendFunctions;
   submitEvidence: (
     input: SubmitEvidenceInput,
   ) => ReturnType<typeof getSubmitEvidenceInstruction> &
     SelfPlanAndSendFunctions;
   sweepDust: (
-    input: SweepDustInput,
-  ) => ReturnType<typeof getSweepDustInstruction> & SelfPlanAndSendFunctions;
+    input: SweepDustAsyncInput,
+  ) => ReturnType<typeof getSweepDustInstructionAsync> &
+    SelfPlanAndSendFunctions;
   withdrawPledge: (
     input: WithdrawPledgeAsyncInput,
   ) => ReturnType<typeof getWithdrawPledgeInstructionAsync> &
@@ -677,18 +577,13 @@ export function bestcrowProgram() {
         accounts: {
           backer: addSelfFetchFunctions(client, getBackerCodec()),
           campaign: addSelfFetchFunctions(client, getCampaignCodec()),
-          voteReceipt: addSelfFetchFunctions(client, getVoteReceiptCodec()),
+          daoBinding: addSelfFetchFunctions(client, getDaoBindingCodec()),
         },
         instructions: {
           cancelCampaign: (input) =>
             addSelfPlanAndSendFunctions(
               client,
               getCancelCampaignInstruction(input),
-            ),
-          castVote: (input) =>
-            addSelfPlanAndSendFunctions(
-              client,
-              getCastVoteInstructionAsync(input),
             ),
           claimRefund: (input) =>
             addSelfPlanAndSendFunctions(
@@ -700,15 +595,10 @@ export function bestcrowProgram() {
               client,
               getCloseBackerInstructionAsync(input),
             ),
-          closeVoteReceipt: (input) =>
-            addSelfPlanAndSendFunctions(
-              client,
-              getCloseVoteReceiptInstruction(input),
-            ),
           createCampaign: (input) =>
             addSelfPlanAndSendFunctions(
               client,
-              getCreateCampaignInstruction(input),
+              getCreateCampaignInstructionAsync(input),
             ),
           expireMilestone: (input) =>
             addSelfPlanAndSendFunctions(
@@ -720,20 +610,15 @@ export function bestcrowProgram() {
               client,
               getFinalizeFundingInstruction(input),
             ),
-          finalizeVote: (input) =>
-            addSelfPlanAndSendFunctions(
-              client,
-              getFinalizeVoteInstruction(input),
-            ),
           pledge: (input) =>
             addSelfPlanAndSendFunctions(
               client,
               getPledgeInstructionAsync(input),
             ),
-          releaseMilestone: (input) =>
+          resolveMilestone: (input) =>
             addSelfPlanAndSendFunctions(
               client,
-              getReleaseMilestoneInstruction(input),
+              getResolveMilestoneInstructionAsync(input),
             ),
           submitEvidence: (input) =>
             addSelfPlanAndSendFunctions(
@@ -741,7 +626,10 @@ export function bestcrowProgram() {
               getSubmitEvidenceInstruction(input),
             ),
           sweepDust: (input) =>
-            addSelfPlanAndSendFunctions(client, getSweepDustInstruction(input)),
+            addSelfPlanAndSendFunctions(
+              client,
+              getSweepDustInstructionAsync(input),
+            ),
           withdrawPledge: (input) =>
             addSelfPlanAndSendFunctions(
               client,

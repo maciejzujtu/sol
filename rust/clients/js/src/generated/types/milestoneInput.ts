@@ -8,28 +8,37 @@
 
 import {
   combineCodec,
+  getAddressDecoder,
+  getAddressEncoder,
   getI64Decoder,
   getI64Encoder,
   getStructDecoder,
   getStructEncoder,
   getU64Decoder,
   getU64Encoder,
+  type Address,
   type FixedSizeCodec,
   type FixedSizeDecoder,
   type FixedSizeEncoder,
 } from "@solana/kit";
 
-export type MilestoneInput = { amount: bigint; dueAt: bigint };
+export type MilestoneInput = {
+  amount: bigint;
+  dueAt: bigint;
+  proposal: Address;
+};
 
 export type MilestoneInputArgs = {
   amount: number | bigint;
   dueAt: number | bigint;
+  proposal: Address;
 };
 
 export function getMilestoneInputEncoder(): FixedSizeEncoder<MilestoneInputArgs> {
   return getStructEncoder([
     ["amount", getU64Encoder()],
     ["dueAt", getI64Encoder()],
+    ["proposal", getAddressEncoder()],
   ]);
 }
 
@@ -37,6 +46,7 @@ export function getMilestoneInputDecoder(): FixedSizeDecoder<MilestoneInput> {
   return getStructDecoder([
     ["amount", getU64Decoder()],
     ["dueAt", getI64Decoder()],
+    ["proposal", getAddressDecoder()],
   ]);
 }
 

@@ -59,6 +59,13 @@ export type PledgeInstruction<
   TAccountWallet extends string | AccountMeta<string> = string,
   TAccountCampaign extends string | AccountMeta<string> = string,
   TAccountBacker extends string | AccountMeta<string> = string,
+  TAccountQuoteMint extends string | AccountMeta<string> = string,
+  TAccountVault extends string | AccountMeta<string> = string,
+  TAccountWalletToken extends string | AccountMeta<string> = string,
+  TAccountCreator extends string | AccountMeta<string> = string,
+  TAccountCreatorToken extends string | AccountMeta<string> = string,
+  TAccountTokenProgram extends string | AccountMeta<string> =
+    "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
   TAccountSystemProgram extends string | AccountMeta<string> =
     "11111111111111111111111111111111",
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
@@ -76,6 +83,24 @@ export type PledgeInstruction<
       TAccountBacker extends string
         ? WritableAccount<TAccountBacker>
         : TAccountBacker,
+      TAccountQuoteMint extends string
+        ? ReadonlyAccount<TAccountQuoteMint>
+        : TAccountQuoteMint,
+      TAccountVault extends string
+        ? WritableAccount<TAccountVault>
+        : TAccountVault,
+      TAccountWalletToken extends string
+        ? WritableAccount<TAccountWalletToken>
+        : TAccountWalletToken,
+      TAccountCreator extends string
+        ? ReadonlyAccount<TAccountCreator>
+        : TAccountCreator,
+      TAccountCreatorToken extends string
+        ? WritableAccount<TAccountCreatorToken>
+        : TAccountCreatorToken,
+      TAccountTokenProgram extends string
+        ? ReadonlyAccount<TAccountTokenProgram>
+        : TAccountTokenProgram,
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
@@ -121,12 +146,26 @@ export type PledgeAsyncInput<
   TAccountWallet extends InstructionSignerInput = InstructionSignerInput,
   TAccountCampaign extends InstructionAccountInput = InstructionAccountInput,
   TAccountBacker extends InstructionAccountInput = InstructionAccountInput,
+  TAccountQuoteMint extends InstructionAccountInput = InstructionAccountInput,
+  TAccountVault extends InstructionAccountInput = InstructionAccountInput,
+  TAccountWalletToken extends InstructionAccountInput = InstructionAccountInput,
+  TAccountCreator extends InstructionAccountInput = InstructionAccountInput,
+  TAccountCreatorToken extends InstructionAccountInput =
+    InstructionAccountInput,
+  TAccountTokenProgram extends InstructionAccountInput =
+    InstructionAccountInput,
   TAccountSystemProgram extends InstructionAccountInput =
     InstructionAccountInput,
 > = {
   wallet: TAccountWallet;
   campaign: TAccountCampaign;
   backer?: TAccountBacker;
+  quoteMint: TAccountQuoteMint;
+  vault?: TAccountVault;
+  walletToken?: TAccountWalletToken;
+  creator: TAccountCreator;
+  creatorToken?: TAccountCreatorToken;
+  tokenProgram?: TAccountTokenProgram;
   systemProgram?: TAccountSystemProgram;
   amount: PledgeInstructionDataArgs["amount"];
 };
@@ -135,6 +174,12 @@ export async function getPledgeInstructionAsync<
   TAccountWallet extends InstructionSignerInput,
   TAccountCampaign extends InstructionAccountInput,
   TAccountBacker extends InstructionAccountInput,
+  TAccountQuoteMint extends InstructionAccountInput,
+  TAccountVault extends InstructionAccountInput,
+  TAccountWalletToken extends InstructionAccountInput,
+  TAccountCreator extends InstructionAccountInput,
+  TAccountCreatorToken extends InstructionAccountInput,
+  TAccountTokenProgram extends InstructionAccountInput,
   TAccountSystemProgram extends InstructionAccountInput,
   TProgramAddress extends Address = typeof BESTCROW_PROGRAM_ADDRESS,
 >(
@@ -142,6 +187,12 @@ export async function getPledgeInstructionAsync<
     TAccountWallet,
     TAccountCampaign,
     TAccountBacker,
+    TAccountQuoteMint,
+    TAccountVault,
+    TAccountWalletToken,
+    TAccountCreator,
+    TAccountCreatorToken,
+    TAccountTokenProgram,
     TAccountSystemProgram
   >,
   config?: { programAddress?: TProgramAddress },
@@ -159,6 +210,30 @@ export async function getPledgeInstructionAsync<
     ResolvedInstructionAccountMeta<
       TAccountBacker,
       InstructionAccountInputAddress<TAccountBacker>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountQuoteMint,
+      InstructionAccountInputAddress<TAccountQuoteMint>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountVault,
+      InstructionAccountInputAddress<TAccountVault>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountWalletToken,
+      InstructionAccountInputAddress<TAccountWalletToken>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountCreator,
+      InstructionAccountInputAddress<TAccountCreator>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountCreatorToken,
+      InstructionAccountInputAddress<TAccountCreatorToken>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountTokenProgram,
+      InstructionAccountInputAddress<TAccountTokenProgram>
     >,
     ResolvedInstructionAccountMeta<
       TAccountSystemProgram,
@@ -181,6 +256,32 @@ export async function getPledgeInstructionAsync<
       isWritable: true,
     },
     backer: { value: input.backer ?? null, isSigner: false, isWritable: true },
+    quoteMint: {
+      value: input.quoteMint ?? null,
+      isSigner: false,
+      isWritable: false,
+    },
+    vault: { value: input.vault ?? null, isSigner: false, isWritable: true },
+    walletToken: {
+      value: input.walletToken ?? null,
+      isSigner: false,
+      isWritable: true,
+    },
+    creator: {
+      value: input.creator ?? null,
+      isSigner: false,
+      isWritable: false,
+    },
+    creatorToken: {
+      value: input.creatorToken ?? null,
+      isSigner: false,
+      isWritable: true,
+    },
+    tokenProgram: {
+      value: input.tokenProgram ?? null,
+      isSigner: false,
+      isWritable: false,
+    },
     systemProgram: {
       value: input.systemProgram ?? null,
       isSigner: false,
@@ -216,6 +317,78 @@ export async function getPledgeInstructionAsync<
       ],
     });
   }
+  if (!accounts.vault.value) {
+    accounts.vault.value = await getProgramDerivedAddress({
+      programAddress,
+      seeds: [
+        getBytesEncoder().encode(new Uint8Array([118, 97, 117, 108, 116])),
+        getAddressEncoder().encode(
+          getAddressFromResolvedInstructionAccount(
+            "campaign",
+            accounts.campaign.value,
+          ),
+        ),
+      ],
+    });
+  }
+  if (!accounts.walletToken.value) {
+    accounts.walletToken.value = await getProgramDerivedAddress({
+      programAddress:
+        "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL" as Address<"ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL">,
+      seeds: [
+        getAddressEncoder().encode(
+          getAddressFromResolvedInstructionAccount(
+            "wallet",
+            accounts.wallet.value,
+          ),
+        ),
+        getBytesEncoder().encode(
+          new Uint8Array([
+            6, 221, 246, 225, 215, 101, 161, 147, 217, 203, 225, 70, 206, 235,
+            121, 172, 28, 180, 133, 237, 95, 91, 55, 145, 58, 140, 245, 133,
+            126, 255, 0, 169,
+          ]),
+        ),
+        getAddressEncoder().encode(
+          getAddressFromResolvedInstructionAccount(
+            "quoteMint",
+            accounts.quoteMint.value,
+          ),
+        ),
+      ],
+    });
+  }
+  if (!accounts.creatorToken.value) {
+    accounts.creatorToken.value = await getProgramDerivedAddress({
+      programAddress:
+        "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL" as Address<"ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL">,
+      seeds: [
+        getAddressEncoder().encode(
+          getAddressFromResolvedInstructionAccount(
+            "creator",
+            accounts.creator.value,
+          ),
+        ),
+        getBytesEncoder().encode(
+          new Uint8Array([
+            6, 221, 246, 225, 215, 101, 161, 147, 217, 203, 225, 70, 206, 235,
+            121, 172, 28, 180, 133, 237, 95, 91, 55, 145, 58, 140, 245, 133,
+            126, 255, 0, 169,
+          ]),
+        ),
+        getAddressEncoder().encode(
+          getAddressFromResolvedInstructionAccount(
+            "quoteMint",
+            accounts.quoteMint.value,
+          ),
+        ),
+      ],
+    });
+  }
+  if (!accounts.tokenProgram.value) {
+    accounts.tokenProgram.value =
+      "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" as Address<"TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA">;
+  }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
       "11111111111111111111111111111111" as Address<"11111111111111111111111111111111">;
@@ -226,6 +399,12 @@ export async function getPledgeInstructionAsync<
       getAccountMeta("wallet", accounts.wallet),
       getAccountMeta("campaign", accounts.campaign),
       getAccountMeta("backer", accounts.backer),
+      getAccountMeta("quoteMint", accounts.quoteMint),
+      getAccountMeta("vault", accounts.vault),
+      getAccountMeta("walletToken", accounts.walletToken),
+      getAccountMeta("creator", accounts.creator),
+      getAccountMeta("creatorToken", accounts.creatorToken),
+      getAccountMeta("tokenProgram", accounts.tokenProgram),
       getAccountMeta("systemProgram", accounts.systemProgram),
     ],
     data: getPledgeInstructionDataEncoder().encode(
@@ -247,6 +426,30 @@ export async function getPledgeInstructionAsync<
       InstructionAccountInputAddress<TAccountBacker>
     >,
     ResolvedInstructionAccountMeta<
+      TAccountQuoteMint,
+      InstructionAccountInputAddress<TAccountQuoteMint>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountVault,
+      InstructionAccountInputAddress<TAccountVault>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountWalletToken,
+      InstructionAccountInputAddress<TAccountWalletToken>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountCreator,
+      InstructionAccountInputAddress<TAccountCreator>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountCreatorToken,
+      InstructionAccountInputAddress<TAccountCreatorToken>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountTokenProgram,
+      InstructionAccountInputAddress<TAccountTokenProgram>
+    >,
+    ResolvedInstructionAccountMeta<
       TAccountSystemProgram,
       InstructionAccountInputAddress<TAccountSystemProgram>
     >
@@ -257,12 +460,26 @@ export type PledgeInput<
   TAccountWallet extends InstructionSignerInput = InstructionSignerInput,
   TAccountCampaign extends InstructionAccountInput = InstructionAccountInput,
   TAccountBacker extends InstructionAccountInput = InstructionAccountInput,
+  TAccountQuoteMint extends InstructionAccountInput = InstructionAccountInput,
+  TAccountVault extends InstructionAccountInput = InstructionAccountInput,
+  TAccountWalletToken extends InstructionAccountInput = InstructionAccountInput,
+  TAccountCreator extends InstructionAccountInput = InstructionAccountInput,
+  TAccountCreatorToken extends InstructionAccountInput =
+    InstructionAccountInput,
+  TAccountTokenProgram extends InstructionAccountInput =
+    InstructionAccountInput,
   TAccountSystemProgram extends InstructionAccountInput =
     InstructionAccountInput,
 > = {
   wallet: TAccountWallet;
   campaign: TAccountCampaign;
   backer: TAccountBacker;
+  quoteMint: TAccountQuoteMint;
+  vault: TAccountVault;
+  walletToken: TAccountWalletToken;
+  creator: TAccountCreator;
+  creatorToken: TAccountCreatorToken;
+  tokenProgram?: TAccountTokenProgram;
   systemProgram?: TAccountSystemProgram;
   amount: PledgeInstructionDataArgs["amount"];
 };
@@ -271,6 +488,12 @@ export function getPledgeInstruction<
   TAccountWallet extends InstructionSignerInput,
   TAccountCampaign extends InstructionAccountInput,
   TAccountBacker extends InstructionAccountInput,
+  TAccountQuoteMint extends InstructionAccountInput,
+  TAccountVault extends InstructionAccountInput,
+  TAccountWalletToken extends InstructionAccountInput,
+  TAccountCreator extends InstructionAccountInput,
+  TAccountCreatorToken extends InstructionAccountInput,
+  TAccountTokenProgram extends InstructionAccountInput,
   TAccountSystemProgram extends InstructionAccountInput,
   TProgramAddress extends Address = typeof BESTCROW_PROGRAM_ADDRESS,
 >(
@@ -278,6 +501,12 @@ export function getPledgeInstruction<
     TAccountWallet,
     TAccountCampaign,
     TAccountBacker,
+    TAccountQuoteMint,
+    TAccountVault,
+    TAccountWalletToken,
+    TAccountCreator,
+    TAccountCreatorToken,
+    TAccountTokenProgram,
     TAccountSystemProgram
   >,
   config?: { programAddress?: TProgramAddress },
@@ -294,6 +523,30 @@ export function getPledgeInstruction<
   ResolvedInstructionAccountMeta<
     TAccountBacker,
     InstructionAccountInputAddress<TAccountBacker>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountQuoteMint,
+    InstructionAccountInputAddress<TAccountQuoteMint>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountVault,
+    InstructionAccountInputAddress<TAccountVault>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountWalletToken,
+    InstructionAccountInputAddress<TAccountWalletToken>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountCreator,
+    InstructionAccountInputAddress<TAccountCreator>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountCreatorToken,
+    InstructionAccountInputAddress<TAccountCreatorToken>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountTokenProgram,
+    InstructionAccountInputAddress<TAccountTokenProgram>
   >,
   ResolvedInstructionAccountMeta<
     TAccountSystemProgram,
@@ -315,6 +568,32 @@ export function getPledgeInstruction<
       isWritable: true,
     },
     backer: { value: input.backer ?? null, isSigner: false, isWritable: true },
+    quoteMint: {
+      value: input.quoteMint ?? null,
+      isSigner: false,
+      isWritable: false,
+    },
+    vault: { value: input.vault ?? null, isSigner: false, isWritable: true },
+    walletToken: {
+      value: input.walletToken ?? null,
+      isSigner: false,
+      isWritable: true,
+    },
+    creator: {
+      value: input.creator ?? null,
+      isSigner: false,
+      isWritable: false,
+    },
+    creatorToken: {
+      value: input.creatorToken ?? null,
+      isSigner: false,
+      isWritable: true,
+    },
+    tokenProgram: {
+      value: input.tokenProgram ?? null,
+      isSigner: false,
+      isWritable: false,
+    },
     systemProgram: {
       value: input.systemProgram ?? null,
       isSigner: false,
@@ -330,6 +609,10 @@ export function getPledgeInstruction<
   const args = { ...input };
 
   // Resolve default values.
+  if (!accounts.tokenProgram.value) {
+    accounts.tokenProgram.value =
+      "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" as Address<"TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA">;
+  }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
       "11111111111111111111111111111111" as Address<"11111111111111111111111111111111">;
@@ -340,6 +623,12 @@ export function getPledgeInstruction<
       getAccountMeta("wallet", accounts.wallet),
       getAccountMeta("campaign", accounts.campaign),
       getAccountMeta("backer", accounts.backer),
+      getAccountMeta("quoteMint", accounts.quoteMint),
+      getAccountMeta("vault", accounts.vault),
+      getAccountMeta("walletToken", accounts.walletToken),
+      getAccountMeta("creator", accounts.creator),
+      getAccountMeta("creatorToken", accounts.creatorToken),
+      getAccountMeta("tokenProgram", accounts.tokenProgram),
       getAccountMeta("systemProgram", accounts.systemProgram),
     ],
     data: getPledgeInstructionDataEncoder().encode(
@@ -361,6 +650,30 @@ export function getPledgeInstruction<
       InstructionAccountInputAddress<TAccountBacker>
     >,
     ResolvedInstructionAccountMeta<
+      TAccountQuoteMint,
+      InstructionAccountInputAddress<TAccountQuoteMint>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountVault,
+      InstructionAccountInputAddress<TAccountVault>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountWalletToken,
+      InstructionAccountInputAddress<TAccountWalletToken>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountCreator,
+      InstructionAccountInputAddress<TAccountCreator>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountCreatorToken,
+      InstructionAccountInputAddress<TAccountCreatorToken>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountTokenProgram,
+      InstructionAccountInputAddress<TAccountTokenProgram>
+    >,
+    ResolvedInstructionAccountMeta<
       TAccountSystemProgram,
       InstructionAccountInputAddress<TAccountSystemProgram>
     >
@@ -376,7 +689,13 @@ export type ParsedPledgeInstruction<
     wallet: TAccountMetas[0];
     campaign: TAccountMetas[1];
     backer: TAccountMetas[2];
-    systemProgram: TAccountMetas[3];
+    quoteMint: TAccountMetas[3];
+    vault: TAccountMetas[4];
+    walletToken: TAccountMetas[5];
+    creator: TAccountMetas[6];
+    creatorToken: TAccountMetas[7];
+    tokenProgram: TAccountMetas[8];
+    systemProgram: TAccountMetas[9];
   };
   data: PledgeInstructionData;
 };
@@ -389,12 +708,12 @@ export function parsePledgeInstruction<
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>,
 ): ParsedPledgeInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 4) {
+  if (instruction.accounts.length < 10) {
     throw new SolanaError(
       SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
       {
         actualAccountMetas: instruction.accounts.length,
-        expectedAccountMetas: 4,
+        expectedAccountMetas: 10,
       },
     );
   }
@@ -410,6 +729,12 @@ export function parsePledgeInstruction<
       wallet: getNextAccount(),
       campaign: getNextAccount(),
       backer: getNextAccount(),
+      quoteMint: getNextAccount(),
+      vault: getNextAccount(),
+      walletToken: getNextAccount(),
+      creator: getNextAccount(),
+      creatorToken: getNextAccount(),
+      tokenProgram: getNextAccount(),
       systemProgram: getNextAccount(),
     },
     data: getPledgeInstructionDataDecoder().decode(instruction.data),

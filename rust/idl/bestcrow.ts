@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/bestcrow.json`.
  */
 export type Bestcrow = {
-  "address": "EousWVK2cePYb9zvv1oWSca4VNdRQqYef8CsxQ6BL57R",
+  "address": "FUTARELBfJfQ8RDGhg1wdhddq1odMAJUePHFuBYfUxKq",
   "metadata": {
     "name": "bestcrow",
     "version": "0.1.0",
@@ -68,105 +68,6 @@ export type Bestcrow = {
       "args": []
     },
     {
-      "name": "castVote",
-      "discriminator": [
-        20,
-        212,
-        15,
-        189,
-        69,
-        180,
-        69,
-        151
-      ],
-      "accounts": [
-        {
-          "name": "wallet",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "campaign",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  99,
-                  97,
-                  109,
-                  112,
-                  97,
-                  105,
-                  103,
-                  110
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "campaign.creator",
-                "account": "campaign"
-              },
-              {
-                "kind": "account",
-                "path": "campaign.campaignId",
-                "account": "campaign"
-              }
-            ]
-          }
-        },
-        {
-          "name": "backer",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  98,
-                  97,
-                  99,
-                  107,
-                  101,
-                  114
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "campaign"
-              },
-              {
-                "kind": "account",
-                "path": "wallet"
-              }
-            ]
-          }
-        },
-        {
-          "name": "voteReceipt",
-          "writable": true
-        },
-        {
-          "name": "systemProgram",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": [
-        {
-          "name": "index",
-          "type": "u8"
-        },
-        {
-          "name": "round",
-          "type": "u8"
-        },
-        {
-          "name": "approve",
-          "type": "bool"
-        }
-      ]
-    },
-    {
       "name": "claimRefund",
       "discriminator": [
         15,
@@ -181,6 +82,7 @@ export type Bestcrow = {
       "accounts": [
         {
           "name": "caller",
+          "writable": true,
           "signer": true
         },
         {
@@ -244,6 +146,139 @@ export type Bestcrow = {
               }
             ]
           }
+        },
+        {
+          "name": "quoteMint",
+          "relations": [
+            "campaign"
+          ]
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "campaign"
+              }
+            ]
+          },
+          "relations": [
+            "campaign"
+          ]
+        },
+        {
+          "name": "walletToken",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "wallet"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "quoteMint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "tokenProgram",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "associatedTokenProgram",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        },
+        {
+          "name": "systemProgram",
+          "address": "11111111111111111111111111111111"
         }
       ],
       "args": []
@@ -330,64 +365,6 @@ export type Bestcrow = {
       "args": []
     },
     {
-      "name": "closeVoteReceipt",
-      "discriminator": [
-        245,
-        52,
-        25,
-        255,
-        206,
-        109,
-        60,
-        162
-      ],
-      "accounts": [
-        {
-          "name": "caller",
-          "signer": true
-        },
-        {
-          "name": "campaign",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  99,
-                  97,
-                  109,
-                  112,
-                  97,
-                  105,
-                  103,
-                  110
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "campaign.creator",
-                "account": "campaign"
-              },
-              {
-                "kind": "account",
-                "path": "campaign.campaignId",
-                "account": "campaign"
-              }
-            ]
-          }
-        },
-        {
-          "name": "wallet",
-          "writable": true
-        },
-        {
-          "name": "voteReceipt",
-          "writable": true
-        }
-      ],
-      "args": []
-    },
-    {
       "name": "createCampaign",
       "discriminator": [
         111,
@@ -433,6 +410,163 @@ export type Bestcrow = {
               }
             ]
           }
+        },
+        {
+          "name": "daoBinding",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  97,
+                  111,
+                  45,
+                  98,
+                  105,
+                  110,
+                  100,
+                  105,
+                  110,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "metaDao"
+              }
+            ]
+          }
+        },
+        {
+          "name": "quoteMint"
+        },
+        {
+          "name": "baseMint"
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "campaign"
+              }
+            ]
+          }
+        },
+        {
+          "name": "creatorToken",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "creator"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "quoteMint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "metaDao"
+        },
+        {
+          "name": "tokenProgram",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "associatedTokenProgram",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
         },
         {
           "name": "systemProgram",
@@ -497,6 +631,9 @@ export type Bestcrow = {
               }
             ]
           }
+        },
+        {
+          "name": "proposal"
         }
       ],
       "args": []
@@ -512,61 +649,6 @@ export type Bestcrow = {
         224,
         149,
         90
-      ],
-      "accounts": [
-        {
-          "name": "caller",
-          "signer": true
-        },
-        {
-          "name": "campaign",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  99,
-                  97,
-                  109,
-                  112,
-                  97,
-                  105,
-                  103,
-                  110
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "campaign.creator",
-                "account": "campaign"
-              },
-              {
-                "kind": "account",
-                "path": "campaign.campaignId",
-                "account": "campaign"
-              }
-            ]
-          }
-        },
-        {
-          "name": "creator",
-          "writable": true
-        }
-      ],
-      "args": []
-    },
-    {
-      "name": "finalizeVote",
-      "discriminator": [
-        181,
-        176,
-        6,
-        248,
-        249,
-        134,
-        146,
-        56
       ],
       "accounts": [
         {
@@ -684,6 +766,224 @@ export type Bestcrow = {
           }
         },
         {
+          "name": "quoteMint",
+          "relations": [
+            "campaign"
+          ]
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "campaign"
+              }
+            ]
+          },
+          "relations": [
+            "campaign"
+          ]
+        },
+        {
+          "name": "walletToken",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "wallet"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "quoteMint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "creator"
+        },
+        {
+          "name": "creatorToken",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "creator"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "quoteMint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "tokenProgram",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
           "name": "systemProgram",
           "address": "11111111111111111111111111111111"
         }
@@ -696,16 +996,16 @@ export type Bestcrow = {
       ]
     },
     {
-      "name": "releaseMilestone",
+      "name": "resolveMilestone",
       "discriminator": [
-        56,
-        2,
-        199,
-        164,
-        184,
-        108,
-        167,
-        222
+        183,
+        234,
+        132,
+        97,
+        208,
+        35,
+        45,
+        117
       ],
       "accounts": [
         {
@@ -744,8 +1044,135 @@ export type Bestcrow = {
           }
         },
         {
-          "name": "creator",
-          "writable": true
+          "name": "proposal"
+        },
+        {
+          "name": "quoteMint",
+          "relations": [
+            "campaign"
+          ]
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "campaign"
+              }
+            ]
+          },
+          "relations": [
+            "campaign"
+          ]
+        },
+        {
+          "name": "creator"
+        },
+        {
+          "name": "creatorToken",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "creator"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "quoteMint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "tokenProgram",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
         }
       ],
       "args": []
@@ -800,6 +1227,9 @@ export type Bestcrow = {
               }
             ]
           }
+        },
+        {
+          "name": "proposal"
         }
       ],
       "args": [
@@ -863,8 +1293,132 @@ export type Bestcrow = {
           }
         },
         {
-          "name": "creator",
-          "writable": true
+          "name": "creator"
+        },
+        {
+          "name": "quoteMint",
+          "relations": [
+            "campaign"
+          ]
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "campaign"
+              }
+            ]
+          },
+          "relations": [
+            "campaign"
+          ]
+        },
+        {
+          "name": "creatorToken",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "creator"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "quoteMint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "tokenProgram",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
         }
       ],
       "args": []
@@ -944,6 +1498,131 @@ export type Bestcrow = {
               }
             ]
           }
+        },
+        {
+          "name": "quoteMint",
+          "relations": [
+            "campaign"
+          ]
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "campaign"
+              }
+            ]
+          },
+          "relations": [
+            "campaign"
+          ]
+        },
+        {
+          "name": "walletToken",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "wallet"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "quoteMint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "tokenProgram",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
         }
       ],
       "args": [
@@ -982,16 +1661,16 @@ export type Bestcrow = {
       ]
     },
     {
-      "name": "voteReceipt",
+      "name": "daoBinding",
       "discriminator": [
-        104,
-        20,
-        204,
-        252,
-        45,
-        84,
-        37,
-        195
+        38,
+        212,
+        48,
+        162,
+        139,
+        142,
+        38,
+        197
       ]
     }
   ],
@@ -1073,19 +1752,6 @@ export type Bestcrow = {
         105,
         7
       ]
-    },
-    {
-      "name": "voteRecorded",
-      "discriminator": [
-        72,
-        160,
-        49,
-        123,
-        215,
-        219,
-        68,
-        221
-      ]
     }
   ],
   "errors": [
@@ -1141,48 +1807,68 @@ export type Bestcrow = {
     },
     {
       "code": 6010,
-      "name": "wrongRound",
-      "msg": "Wrong milestone or voting round"
+      "name": "wrongMilestone",
+      "msg": "Wrong milestone or MetaDAO proposal"
     },
     {
       "code": 6011,
-      "name": "noVotingWeight",
-      "msg": "Vote weight is unavailable"
-    },
-    {
-      "code": 6012,
       "name": "arithmetic",
       "msg": "Arithmetic overflow"
     },
     {
-      "code": 6013,
+      "code": 6012,
       "name": "insufficientEscrow",
       "msg": "Escrow balance is insufficient"
     },
     {
-      "code": 6014,
+      "code": 6013,
       "name": "refundUnavailable",
       "msg": "Refund is not available"
     },
     {
-      "code": 6015,
+      "code": 6014,
       "name": "alreadyClaimed",
       "msg": "Refund already claimed"
     },
     {
-      "code": 6016,
+      "code": 6015,
       "name": "refundsOutstanding",
       "msg": "Refunds are still outstanding"
     },
     {
-      "code": 6017,
+      "code": 6016,
       "name": "emptyEvidence",
       "msg": "Evidence hash must be nonzero"
     },
     {
-      "code": 6018,
+      "code": 6017,
       "name": "receiptStillNeeded",
-      "msg": "Account is still needed for funding, voting, or refund"
+      "msg": "Account is still needed for funding or refund"
+    },
+    {
+      "code": 6018,
+      "name": "invalidMetaDaoAccount",
+      "msg": "MetaDAO account has an unexpected owner, discriminator, or layout"
+    },
+    {
+      "code": 6019,
+      "name": "invalidMarketBinding",
+      "msg": "MetaDAO DAO and proposal are not bound to this campaign"
+    },
+    {
+      "code": 6020,
+      "name": "invalidProposalState",
+      "msg": "MetaDAO proposal is not in the required state"
+    },
+    {
+      "code": 6021,
+      "name": "marketStillLive",
+      "msg": "MetaDAO market is still live"
+    },
+    {
+      "code": 6022,
+      "name": "invalidTokenAccount",
+      "msg": "Token mint, vault, or recipient account does not match the campaign"
     }
   ],
   "types": [
@@ -1228,6 +1914,22 @@ export type Bestcrow = {
             "type": "u64"
           },
           {
+            "name": "quoteMint",
+            "type": "pubkey"
+          },
+          {
+            "name": "baseMint",
+            "type": "pubkey"
+          },
+          {
+            "name": "vault",
+            "type": "pubkey"
+          },
+          {
+            "name": "metaDao",
+            "type": "pubkey"
+          },
+          {
             "name": "goal",
             "type": "u64"
           },
@@ -1264,7 +1966,7 @@ export type Bestcrow = {
             "type": "i64"
           },
           {
-            "name": "votePeriodSecs",
+            "name": "marketTimeoutSecs",
             "type": "i64"
           },
           {
@@ -1301,6 +2003,10 @@ export type Bestcrow = {
             "type": "u8"
           },
           {
+            "name": "vaultBump",
+            "type": "u8"
+          },
+          {
             "name": "milestones",
             "type": {
               "vec": {
@@ -1333,6 +2039,18 @@ export type Bestcrow = {
           {
             "name": "fundingDeadline",
             "type": "i64"
+          },
+          {
+            "name": "quoteMint",
+            "type": "pubkey"
+          },
+          {
+            "name": "baseMint",
+            "type": "pubkey"
+          },
+          {
+            "name": "metaDao",
+            "type": "pubkey"
           }
         ]
       }
@@ -1422,7 +2140,7 @@ export type Bestcrow = {
             "type": "i64"
           },
           {
-            "name": "votePeriodSecs",
+            "name": "marketTimeoutSecs",
             "type": "i64"
           },
           {
@@ -1448,6 +2166,26 @@ export type Bestcrow = {
       }
     },
     {
+      "name": "daoBinding",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "dao",
+            "type": "pubkey"
+          },
+          {
+            "name": "campaign",
+            "type": "pubkey"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
       "name": "evidenceSubmitted",
       "type": {
         "kind": "struct",
@@ -1461,8 +2199,8 @@ export type Bestcrow = {
             "type": "u8"
           },
           {
-            "name": "round",
-            "type": "u8"
+            "name": "proposal",
+            "type": "pubkey"
           },
           {
             "name": "evidenceHash",
@@ -1496,6 +2234,10 @@ export type Bestcrow = {
           {
             "name": "refund",
             "type": "bool"
+          },
+          {
+            "name": "mint",
+            "type": "pubkey"
           }
         ]
       }
@@ -1514,6 +2256,10 @@ export type Bestcrow = {
             "type": "i64"
           },
           {
+            "name": "proposal",
+            "type": "pubkey"
+          },
+          {
             "name": "evidenceHash",
             "type": {
               "array": [
@@ -1527,24 +2273,8 @@ export type Bestcrow = {
             "type": "i64"
           },
           {
-            "name": "voteDeadline",
+            "name": "marketDeadline",
             "type": "i64"
-          },
-          {
-            "name": "yesWeight",
-            "type": "u64"
-          },
-          {
-            "name": "noWeight",
-            "type": "u64"
-          },
-          {
-            "name": "replyDeadline",
-            "type": "i64"
-          },
-          {
-            "name": "round",
-            "type": "u8"
           },
           {
             "name": "status",
@@ -1569,6 +2299,10 @@ export type Bestcrow = {
           {
             "name": "dueAt",
             "type": "i64"
+          },
+          {
+            "name": "proposal",
+            "type": "pubkey"
           }
         ]
       }
@@ -1606,83 +2340,13 @@ export type Bestcrow = {
             "name": "pending"
           },
           {
-            "name": "voting"
+            "name": "reviewing"
           },
           {
-            "name": "revision"
+            "name": "passed"
           },
           {
-            "name": "showCause"
-          },
-          {
-            "name": "approved"
-          },
-          {
-            "name": "released"
-          }
-        ]
-      }
-    },
-    {
-      "name": "voteReceipt",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "campaign",
-            "type": "pubkey"
-          },
-          {
-            "name": "wallet",
-            "type": "pubkey"
-          },
-          {
-            "name": "milestoneIndex",
-            "type": "u8"
-          },
-          {
-            "name": "round",
-            "type": "u8"
-          },
-          {
-            "name": "approve",
-            "type": "bool"
-          },
-          {
-            "name": "bump",
-            "type": "u8"
-          }
-        ]
-      }
-    },
-    {
-      "name": "voteRecorded",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "campaign",
-            "type": "pubkey"
-          },
-          {
-            "name": "milestoneIndex",
-            "type": "u8"
-          },
-          {
-            "name": "round",
-            "type": "u8"
-          },
-          {
-            "name": "backer",
-            "type": "pubkey"
-          },
-          {
-            "name": "approve",
-            "type": "bool"
-          },
-          {
-            "name": "weight",
-            "type": "u64"
+            "name": "rejected"
           }
         ]
       }

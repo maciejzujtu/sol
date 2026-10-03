@@ -44,6 +44,9 @@ export type CampaignCreatedEvent = {
   creator: Address;
   goal: bigint;
   fundingDeadline: bigint;
+  quoteMint: Address;
+  baseMint: Address;
+  metaDao: Address;
 };
 
 export type CampaignCreatedEventArgs = {
@@ -51,6 +54,9 @@ export type CampaignCreatedEventArgs = {
   creator: Address;
   goal: number | bigint;
   fundingDeadline: number | bigint;
+  quoteMint: Address;
+  baseMint: Address;
+  metaDao: Address;
 };
 
 /** Gets the encoder for {@link CampaignCreatedEventArgs} event data. */
@@ -61,6 +67,9 @@ export function getCampaignCreatedEventEncoder(): FixedSizeEncoder<CampaignCreat
       ["creator", getAddressEncoder()],
       ["goal", getU64Encoder()],
       ["fundingDeadline", getI64Encoder()],
+      ["quoteMint", getAddressEncoder()],
+      ["baseMint", getAddressEncoder()],
+      ["metaDao", getAddressEncoder()],
     ]),
     [getConstantEncoder(CAMPAIGN_CREATED_EVENT_DISCRIMINATOR)],
   );
@@ -74,6 +83,9 @@ export function getCampaignCreatedEventDecoder(): FixedSizeDecoder<CampaignCreat
       ["creator", getAddressDecoder()],
       ["goal", getU64Decoder()],
       ["fundingDeadline", getI64Decoder()],
+      ["quoteMint", getAddressDecoder()],
+      ["baseMint", getAddressDecoder()],
+      ["metaDao", getAddressDecoder()],
     ]),
     [getConstantDecoder(CAMPAIGN_CREATED_EVENT_DISCRIMINATOR)],
   );

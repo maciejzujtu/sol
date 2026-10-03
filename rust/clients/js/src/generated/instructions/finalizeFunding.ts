@@ -53,7 +53,6 @@ export type FinalizeFundingInstruction<
   TProgram extends string = typeof BESTCROW_PROGRAM_ADDRESS,
   TAccountCaller extends string | AccountMeta<string> = string,
   TAccountCampaign extends string | AccountMeta<string> = string,
-  TAccountCreator extends string | AccountMeta<string> = string,
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
@@ -66,9 +65,6 @@ export type FinalizeFundingInstruction<
       TAccountCampaign extends string
         ? WritableAccount<TAccountCampaign>
         : TAccountCampaign,
-      TAccountCreator extends string
-        ? WritableAccount<TAccountCreator>
-        : TAccountCreator,
       ...TRemainingAccounts,
     ]
   >;
@@ -105,24 +101,17 @@ export function getFinalizeFundingInstructionDataCodec(): FixedSizeCodec<
 export type FinalizeFundingInput<
   TAccountCaller extends InstructionSignerInput = InstructionSignerInput,
   TAccountCampaign extends InstructionAccountInput = InstructionAccountInput,
-  TAccountCreator extends InstructionAccountInput = InstructionAccountInput,
 > = {
   caller: TAccountCaller;
   campaign: TAccountCampaign;
-  creator: TAccountCreator;
 };
 
 export function getFinalizeFundingInstruction<
   TAccountCaller extends InstructionSignerInput,
   TAccountCampaign extends InstructionAccountInput,
-  TAccountCreator extends InstructionAccountInput,
   TProgramAddress extends Address = typeof BESTCROW_PROGRAM_ADDRESS,
 >(
-  input: FinalizeFundingInput<
-    TAccountCaller,
-    TAccountCampaign,
-    TAccountCreator
-  >,
+  input: FinalizeFundingInput<TAccountCaller, TAccountCampaign>,
   config?: { programAddress?: TProgramAddress },
 ): FinalizeFundingInstruction<
   TProgramAddress,
@@ -133,10 +122,6 @@ export function getFinalizeFundingInstruction<
   ResolvedInstructionAccountMeta<
     TAccountCampaign,
     InstructionAccountInputAddress<TAccountCampaign>
-  >,
-  ResolvedInstructionAccountMeta<
-    TAccountCreator,
-    InstructionAccountInputAddress<TAccountCreator>
   >
 > {
   // Program address.
@@ -153,11 +138,6 @@ export function getFinalizeFundingInstruction<
       isSigner: false,
       isWritable: true,
     },
-    creator: {
-      value: input.creator ?? null,
-      isSigner: false,
-      isWritable: true,
-    },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -168,7 +148,6 @@ export function getFinalizeFundingInstruction<
     accounts: [
       getAccountMeta("caller", accounts.caller),
       getAccountMeta("campaign", accounts.campaign),
-      getAccountMeta("creator", accounts.creator),
     ],
     data: getFinalizeFundingInstructionDataEncoder().encode({}),
     programAddress,
@@ -181,10 +160,6 @@ export function getFinalizeFundingInstruction<
     ResolvedInstructionAccountMeta<
       TAccountCampaign,
       InstructionAccountInputAddress<TAccountCampaign>
-    >,
-    ResolvedInstructionAccountMeta<
-      TAccountCreator,
-      InstructionAccountInputAddress<TAccountCreator>
     >
   >);
 }
@@ -197,7 +172,6 @@ export type ParsedFinalizeFundingInstruction<
   accounts: {
     caller: TAccountMetas[0];
     campaign: TAccountMetas[1];
-    creator: TAccountMetas[2];
   };
   data: FinalizeFundingInstructionData;
 };
@@ -210,12 +184,12 @@ export function parseFinalizeFundingInstruction<
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>,
 ): ParsedFinalizeFundingInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 3) {
+  if (instruction.accounts.length < 2) {
     throw new SolanaError(
       SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
       {
         actualAccountMetas: instruction.accounts.length,
-        expectedAccountMetas: 3,
+        expectedAccountMetas: 2,
       },
     );
   }
@@ -227,11 +201,7 @@ export function parseFinalizeFundingInstruction<
   };
   return {
     programAddress: instruction.programAddress,
-    accounts: {
-      caller: getNextAccount(),
-      campaign: getNextAccount(),
-      creator: getNextAccount(),
-    },
+    accounts: { caller: getNextAccount(), campaign: getNextAccount() },
     data: getFinalizeFundingInstructionDataDecoder().decode(instruction.data),
   };
 }
